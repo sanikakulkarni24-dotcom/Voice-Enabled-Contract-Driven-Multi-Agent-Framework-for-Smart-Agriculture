@@ -1,0 +1,644 @@
+body {
+
+    font-family: Arial, sans-serif;
+
+    background: #f4f7f4;
+
+    margin: 0;
+
+    padding: 30px;
+
+    color: #222;
+}
+
+
+.container {
+
+    max-width: 1000px;
+
+    margin: auto;
+}
+
+
+/* HEADER */
+
+header {
+
+    text-align: center;
+
+    margin-bottom: 30px;
+}
+
+
+header h1 {
+
+    margin-bottom: 5px;
+}
+
+
+header p {
+
+    color: #666;
+
+    margin-top: 5px;
+}
+
+
+/* SECTIONS */
+
+section {
+
+    background: white;
+
+    padding: 20px;
+
+    margin-bottom: 20px;
+
+    border-radius: 10px;
+
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+
+h2 {
+
+    margin-top: 0;
+
+    margin-bottom: 20px;
+}
+
+
+/* FIELDS */
+
+.fields {
+
+    display: flex;
+
+    gap: 15px;
+}
+
+
+.card {
+
+    flex: 1;
+
+    background: #f7f9f7;
+
+    padding: 18px;
+
+    border-radius: 8px;
+
+    border: 1px solid #e5e5e5;
+}
+
+
+.card h3 {
+
+    margin-top: 0;
+}
+
+
+.card p {
+
+    margin: 10px 0;
+}
+
+
+/* AGENTS */
+
+.agent {
+
+    background: #f7f9f7;
+
+    padding: 15px;
+
+    margin-bottom: 10px;
+
+    border-radius: 8px;
+
+    border: 1px solid #e5e5e5;
+}
+
+
+.agent-details {
+
+    margin-top: 8px;
+
+    color: #666;
+
+    line-height: 1.6;
+}
+
+
+/* RESOURCES */
+
+.resources {
+
+    display: flex;
+
+    gap: 15px;
+}
+
+
+.resource {
+
+    text-align: center;
+}
+
+
+.resource-icon {
+
+    font-size: 28px;
+
+    margin-bottom: 8px;
+}
+
+
+.resource p {
+
+    font-size: 20px;
+
+    font-weight: bold;
+}
+
+
+/* VOICE SECTION */
+
+.voice-section {
+
+    text-align: center;
+}
+
+
+.example {
+
+    background: #f5f5f5;
+
+    padding: 15px;
+
+    border-radius: 8px;
+
+    margin: 20px auto;
+
+    max-width: 600px;
+}
+
+
+button {
+
+    background: #2e7d32;
+
+    color: white;
+
+    border: none;
+
+    padding: 14px 28px;
+
+    border-radius: 7px;
+
+    font-size: 16px;
+
+    cursor: pointer;
+}
+
+
+button:hover {
+
+    background: #256628;
+}
+
+
+button:disabled {
+
+    background: #999;
+
+    cursor: not-allowed;
+}
+
+
+/* VOICE STATUS */
+
+.voice-status {
+
+    margin: 20px auto;
+
+    padding: 15px;
+
+    max-width: 600px;
+
+    background: #f7f9f7;
+
+    border: 1px solid #e5e5e5;
+
+    border-radius: 8px;
+
+    font-weight: bold;
+}
+
+
+/* CURRENT TASK */
+
+.current-task {
+
+    background: #f7f9f7;
+
+    padding: 15px;
+
+    border-radius: 8px;
+
+    color: #666;
+}
+
+
+/* SMALL SCREENS */
+
+@media (max-width: 700px) {
+
+    .fields,
+    .resources {
+
+        flex-direction: column;
+    }
+
+}
+
+/* COMMAND SELECTION */
+
+.command-selection {
+
+    margin-top: 25px;
+
+    padding: 20px;
+
+    background: #f7f9f7;
+
+    border: 1px solid #e5e5e5;
+
+    border-radius: 8px;
+}
+
+
+.command-selection h3 {
+
+    margin-top: 0;
+
+    margin-bottom: 10px;
+}
+
+
+.command-selection p {
+
+    color: #666;
+
+    margin-bottom: 20px;
+}
+
+
+.selection-button {
+
+    margin: 5px;
+
+    background: #2e7d32;
+}
+
+
+.speak-again-button {
+
+    margin-top: 15px;
+
+    background: #555;
+}
+
+.command-heard {
+
+    margin: 20px auto;
+
+    padding: 15px;
+
+    max-width: 600px;
+
+    background: #eef6ee;
+
+    border: 1px solid #c9dfc9;
+
+    border-radius: 8px;
+
+    text-align: left;
+}
+
+
+.heard-command {
+
+    margin-top: 8px;
+
+    font-size: 17px;
+
+    color: #333;
+
+    font-style: italic;
+}
+
+
+/* COMMAND SELECTION */
+
+.command-selection {
+
+    margin-top: 25px;
+
+    padding: 20px;
+
+    background: #f7f9f7;
+
+    border: 1px solid #e5e5e5;
+
+    border-radius: 8px;
+}
+
+
+.command-selection h3 {
+
+    margin-top: 0;
+
+    margin-bottom: 10px;
+}
+
+
+.command-selection p {
+
+    color: #666;
+
+    margin-bottom: 20px;
+}
+
+
+.selection-button {
+
+    margin: 5px;
+
+    background: #2e7d32;
+}
+
+
+.speak-again-button {
+
+    margin-top: 15px;
+
+    background: #555;
+}
+
+.heard-status {
+    margin-top: 12px;
+    color: #2e7d32;
+    font-weight: 600;
+}
+
+.continue-button {
+    margin-top: 15px;
+    background: #2e7d32;
+}
+
+.continue-button:hover {
+    background: #256628;
+}
+
+/* =========================================================
+   TASK WORKFLOW DASHBOARD
+   ========================================================= */
+
+.workflow-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 24px;
+    margin-top: 20px;
+}
+
+.workflow-panel {
+    background: #ffffff;
+    border-radius: 12px;
+    padding: 24px;
+    border: 1px solid #e5e7eb;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06);
+}
+
+.panel-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 15px;
+    margin-bottom: 20px;
+}
+
+.panel-header h2 {
+    margin: 0;
+}
+
+
+/* CURRENT STAGE */
+
+.stage-badge {
+    padding: 8px 14px;
+    border-radius: 20px;
+    background: #eef2ff;
+    color: #3730a3;
+    font-size: 13px;
+    font-weight: 600;
+    text-align: center;
+}
+
+
+/* LIVE OUTPUT */
+
+.live-output {
+    border-top: 1px solid #e5e7eb;
+    padding-top: 18px;
+}
+
+.live-output h3 {
+    margin-top: 0;
+    margin-bottom: 16px;
+}
+
+.empty-output {
+    padding: 25px;
+    text-align: center;
+    color: #6b7280;
+    background: #f9fafb;
+    border-radius: 8px;
+}
+
+
+/* OUTPUT MESSAGE */
+
+.output-message {
+    padding: 14px;
+    background: #f9fafb;
+    border-radius: 8px;
+    color: #374151;
+    margin-bottom: 18px;
+}
+
+
+/* CONTRACT OUTPUT */
+
+.contract-output {
+    background: #f9fafb;
+    border-radius: 10px;
+    padding: 18px;
+    margin-top: 15px;
+}
+
+.contract-output h3 {
+    margin-top: 0;
+}
+
+
+/* CONTRACT ROW */
+
+.contract-row {
+    display: flex;
+    justify-content: space-between;
+    gap: 20px;
+    padding: 10px 0;
+    border-bottom: 1px solid #e5e7eb;
+}
+
+.contract-row span {
+    color: #6b7280;
+}
+
+.contract-row strong {
+    text-align: right;
+    color: #111827;
+}
+
+
+/* CONTRACT BLOCK */
+
+.contract-block {
+    margin-top: 18px;
+    padding-top: 5px;
+}
+
+.contract-block strong {
+    display: block;
+    margin-bottom: 8px;
+    color: #111827;
+}
+
+.contract-block ul {
+    margin: 8px 0 0 20px;
+    padding: 0;
+}
+
+.contract-block li {
+    margin-bottom: 6px;
+    color: #4b5563;
+}
+
+.contract-block p {
+    color: #4b5563;
+    line-height: 1.5;
+}
+
+
+/* VERIFICATION */
+
+.verification-output {
+    background: #f9fafb;
+    border-radius: 10px;
+    padding: 18px;
+    margin-top: 15px;
+}
+
+.verification-output h3 {
+    margin-top: 0;
+}
+
+.verification-status {
+    font-weight: 700;
+    padding: 10px 14px;
+    border-radius: 8px;
+    background: #eef2ff;
+    color: #3730a3;
+    display: inline-block;
+}
+
+
+/* TASK INFORMATION */
+
+.task-information {
+    border-top: 1px solid #e5e7eb;
+    padding-top: 5px;
+}
+
+.info-row {
+    display: flex;
+    justify-content: space-between;
+    gap: 20px;
+    padding: 13px 0;
+    border-bottom: 1px solid #e5e7eb;
+}
+
+.info-row span {
+    color: #6b7280;
+}
+
+.info-row strong {
+    color: #111827;
+    text-align: right;
+}
+
+
+/* WORKFLOW PROGRESS */
+
+.progress-section {
+    margin-top: 25px;
+    padding-top: 20px;
+    border-top: 1px solid #e5e7eb;
+}
+
+.progress-section h3 {
+    margin-top: 0;
+}
+
+.completed-steps {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.completed-steps li {
+    padding: 9px 0;
+    color: #374151;
+}
+
+.no-progress {
+    color: #6b7280;
+}
+
+
+/* RESPONSIVE */
+
+@media (max-width: 900px) {
+
+    .workflow-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .panel-header {
+        align-items: flex-start;
+        flex-direction: column;
+    }
+
+    .contract-row,
+    .info-row {
+        flex-direction: column;
+        gap: 5px;
+    }
+
+    .contract-row strong,
+    .info-row strong {
+        text-align: left;
+    }
+
+}

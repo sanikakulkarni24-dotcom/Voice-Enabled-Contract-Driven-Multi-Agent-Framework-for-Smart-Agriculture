@@ -1,0 +1,2703 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+
+    <title>Smart Agriculture</title>
+
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+
+</head>
+
+
+<body>
+
+    <div class="container">
+
+
+        <!-- ================================================= -->
+        <!-- HEADER -->
+        <!-- ================================================= -->
+
+        <header>
+
+            <h1>Smart Agriculture</h1>
+
+            <p>
+                Voice-Enabled Multi-Agent Framework
+            </p>
+
+        </header>
+
+
+        <!-- ================================================= -->
+        <!-- FARM OVERVIEW -->
+        <!-- ================================================= -->
+
+        <section>
+
+            <h2>Farm Overview</h2>
+
+            <div class="fields">
+
+                {% for field_name, field in farm["fields"].items() %}
+
+                <div class="card">
+
+                    <h3>{{ field_name }}</h3>
+
+                    <p>
+                        Crop:
+                        <strong>{{ field["crop"] }}</strong>
+                    </p>
+
+                    <p>
+                        Soil Moisture:
+                        <strong>{{ field["soil_moisture"] }}%</strong>
+                    </p>
+
+                    <p>
+                        Crop Maturity:
+                        <strong>{{ field["crop_maturity"] }}%</strong>
+                    </p>
+
+                    <p>
+                        Status:
+                        <strong>{{ field["status"] }}</strong>
+                    </p>
+
+                </div>
+
+                {% endfor %}
+
+            </div>
+
+        </section>
+
+
+        <!-- ================================================= -->
+        <!-- AVAILABLE AGENTS -->
+        <!-- ================================================= -->
+
+        <section>
+
+            <h2>Available Agents</h2>
+
+            {% for agent_name, agent in farm["agents"].items() %}
+
+            <div class="agent">
+
+                <div>
+
+                    <strong>
+                        {{ agent_name }}
+                    </strong>
+
+                </div>
+
+                <div class="agent-details">
+
+                    Machine:
+                    {{ agent["machine"] }}
+
+                    <br>
+
+                    Status:
+                    {{ agent["status"] }}
+
+                </div>
+
+            </div>
+
+            {% endfor %}
+
+        </section>
+
+
+        <!-- ================================================= -->
+        <!-- FARM RESOURCES -->
+        <!-- ================================================= -->
+
+        <section>
+
+            <h2>Farm Resources</h2>
+
+            <div class="resources">
+
+
+                <div class="card resource">
+
+                    <div class="resource-icon">
+                    </div>
+
+                    <strong>Water</strong>
+
+                    <p>
+                        {{ farm["resources"]["water"] }} L
+                    </p>
+
+                </div>
+
+
+                <div class="card resource">
+
+                    <div class="resource-icon">
+                    </div>
+
+                    <strong>Fuel</strong>
+
+                    <p>
+                        {{ farm["resources"]["fuel"] }} L
+                    </p>
+
+                </div>
+
+
+                <div class="card resource">
+
+                    <div class="resource-icon">
+                    </div>
+
+                    <strong>Fertilizer</strong>
+
+                    <p>
+                        {{ farm["resources"]["fertilizer"] }} kg
+                    </p>
+
+                </div>
+
+
+            </div>
+
+        </section>
+
+
+        <!-- ================================================= -->
+        <!-- VOICE COMMAND -->
+        <!-- ================================================= -->
+
+        <section class="voice-section">
+
+            <h2>Voice Command</h2>
+
+            <p>
+                Give an agricultural command using your voice.
+            </p>
+
+
+            <div class="example">
+
+                Example:
+
+                <strong>
+                    "Harvest the wheat in Field A"
+                </strong>
+
+            </div>
+
+
+            <!-- COMMAND HEARD -->
+
+            <div id="commandHeard" class="command-heard" {% if state["command"]=="No command yet" %}
+                style="display: none;" {% endif %}>
+
+                <strong>
+                    Command heard:
+                </strong>
+
+                <div id="heardCommand" class="heard-command">
+
+                    {% if state["command"] != "No command yet" %}
+
+                    "{{ state["command"] }}"
+
+                    {% endif %}
+
+                </div>
+
+            </div>
+
+
+            <button id="voiceButton" type="button">
+
+                START VOICE COMMAND
+
+            </button>
+
+
+            <div id="voiceStatus" class="voice-status">
+
+                Ready for voice command.
+
+            </div>
+
+
+            <!-- ================================================= -->
+            <!-- CONTINUE PROCESSING -->
+            <!-- ================================================= -->
+
+            <div id="continueProcessing" class="command-selection" {% if not state.get("needs_continue", False) %}
+                style="display: none;" {% endif %}>
+
+                <h3>
+                    Command recognized
+                </h3>
+
+                <p>
+                    Your command was recognized successfully.
+                    Continue processing to generate and verify
+                    the task contract.
+                </p>
+
+                <button type="button" class="selection-button" onclick="continueProcessing()">
+
+                    CONTINUE PROCESSING
+
+                </button>
+
+            </div>
+
+
+            <!-- ================================================= -->
+            <!-- COMMAND SELECTION -->
+            <!-- ================================================= -->
+
+            <div id="commandSelection" class="command-selection" {% if not state.get("needs_selection", False) %}
+                style="display: none;" {% endif %}>
+
+                <h3>
+                    Did you mean?
+                </h3>
+
+                <p>
+                    The agricultural task could not be identified
+                    confidently. Please select the intended task.
+                </p>
+
+
+                <form action="/select_command" method="POST">
+
+                    <button type="submit" name="command" value="harvest" class="selection-button">
+
+                        Harvest the crop
+
+                    </button>
+
+
+                    <button type="submit" name="command" value="irrigate" class="selection-button">
+
+                        Irrigate the field
+
+                    </button>
+
+
+                    <button type="submit" name="command" value="fertilizer" class="selection-button">
+
+                        Apply fertilizer
+
+                    </button>
+
+                </form>
+
+
+                <button type="button" class="speak-again-button" onclick="startVoiceAgain()">
+
+                    Speak again
+
+                </button>
+
+            </div>
+
+
+        </section>
+
+
+        <!-- ================================================= -->
+        <!-- WORKFLOW DASHBOARD -->
+        <!-- ================================================= -->
+
+        <section>
+
+            <h2>Task Workflow</h2>
+
+
+            <div class="workflow-grid">
+
+
+                <!-- ================================================= -->
+                <!-- CURRENT TASK -->
+                <!-- ================================================= -->
+
+                <div class="workflow-panel">
+
+                    <div class="panel-header">
+
+                        <h2>Current Task</h2>
+
+                        <div id="currentStage" class="stage-badge">
+
+                            {{ state.get(
+                            "current_stage",
+                            "Waiting for voice command"
+                            ) }}
+
+                        </div>
+
+                    </div>
+
+
+                    <div id="liveOutput" class="live-output">
+
+                        <h3>
+                            Live Backend Output
+                        </h3>
+
+
+                        {% set current_output =
+                        state.get("current_output") %}
+
+
+                        {% if current_output %}
+
+
+                        <!-- ================================================= -->
+                        <!-- MESSAGE OUTPUT -->
+                        <!-- ================================================= -->
+
+                        {% if current_output.get("message") %}
+
+                        <div class="output-message">
+
+                            {{ current_output["message"] }}
+
+                        </div>
+
+                        {% endif %}
+
+
+                        <!-- ================================================= -->
+                        <!-- GENERATED CONTRACT -->
+                        <!-- ================================================= -->
+
+                        {% if current_output.get("task_id") %}
+
+                        <div class="contract-output">
+
+                            <h3>
+                                Generated Task Contract
+                            </h3>
+
+
+                            <div class="contract-row">
+
+                                <span>
+                                    Task ID
+                                </span>
+
+                                <strong>
+                                    {{ current_output.get(
+                                    "task_id",
+                                    "None"
+                                    ) }}
+                                </strong>
+
+                            </div>
+
+
+                            <div class="contract-row">
+
+                                <span>
+                                    Agent
+                                </span>
+
+                                <strong>
+                                    {{ current_output.get(
+                                    "agent",
+                                    "None"
+                                    ) }}
+                                </strong>
+
+                            </div>
+
+
+                            <div class="contract-row">
+
+                                <span>
+                                    Machine
+                                </span>
+
+                                <strong>
+                                    {{ current_output.get(
+                                    "machine",
+                                    "None"
+                                    ) }}
+                                </strong>
+
+                            </div>
+
+
+                            <div class="contract-row">
+
+                                <span>
+                                    Task
+                                </span>
+
+                                <strong>
+                                    {{ current_output.get(
+                                    "task",
+                                    "None"
+                                    ) }}
+                                </strong>
+
+                            </div>
+
+
+                            <div class="contract-row">
+
+                                <span>
+                                    Crop
+                                </span>
+
+                                <strong>
+                                    {{ current_output.get(
+                                    "crop",
+                                    "None"
+                                    ) }}
+                                </strong>
+
+                            </div>
+
+
+                            <div class="contract-row">
+
+                                <span>
+                                    Field
+                                </span>
+
+                                <strong>
+                                    {{ current_output.get(
+                                    "field",
+                                    "None"
+                                    ) }}
+                                </strong>
+
+                            </div>
+
+
+                            <div class="contract-block">
+
+                                <strong>
+                                    Preconditions
+                                </strong>
+
+                                <ul>
+
+                                    {% for item in
+                                    current_output.get(
+                                    "preconditions",
+                                    []
+                                    )
+                                    %}
+
+                                    <li>
+                                        {{ item }}
+                                    </li>
+
+                                    {% endfor %}
+
+                                </ul>
+
+                            </div>
+
+
+                            <div class="contract-block">
+
+                                <strong>
+                                    Required Resources
+                                </strong>
+
+                                <ul>
+
+                                    {% for item in
+                                    current_output.get(
+                                    "required_resources",
+                                    []
+                                    )
+                                    %}
+
+                                    <li>
+                                        {{ item }}
+                                    </li>
+
+                                    {% endfor %}
+
+                                </ul>
+
+                            </div>
+
+
+                            <div class="contract-block">
+
+                                <strong>
+                                    Constraints
+                                </strong>
+
+                                <ul>
+
+                                    {% for item in
+                                    current_output.get(
+                                    "constraints",
+                                    []
+                                    )
+                                    %}
+
+                                    <li>
+                                        {{ item }}
+                                    </li>
+
+                                    {% endfor %}
+
+                                </ul>
+
+                            </div>
+
+
+                            <div class="contract-block">
+
+                                <strong>
+                                    Expected Outcome
+                                </strong>
+
+                                <p>
+
+                                    {{ current_output.get(
+                                    "expected_outcome",
+                                    "None"
+                                    ) }}
+
+                                </p>
+
+                            </div>
+
+                        </div>
+
+
+                        <!-- CHECK CONTRACT -->
+
+                        {% if state.get(
+                        "needs_contract_check",
+                        False
+                        ) %}
+
+                        <div class="command-selection" style="margin-top: 20px;">
+
+                            <h3>
+                                Review Generated Contract
+                            </h3>
+
+                            <p>
+                                The task contract has been generated.
+                                Please check the contract before verification.
+                            </p>
+
+                            <button type="button" class="selection-button" onclick="checkContract()">
+
+                                CHECK CONTRACT
+
+                            </button>
+
+                        </div>
+
+                        {% endif %}
+
+
+                        {% endif %}
+
+
+                        <!-- ================================================= -->
+                        <!-- VERIFICATION OUTPUT -->
+                        <!-- ================================================= -->
+
+                        {% if current_output.get("verified") is not none %}
+
+                        <div class="verification-output">
+
+                            <h3>
+                                Contract Verification
+                            </h3>
+
+
+                            <div class="verification-status">
+
+                                {% if current_output["verified"] %}
+
+                                APPROVED
+
+                                {% else %}
+
+                                REJECTED
+
+                                {% endif %}
+
+                            </div>
+
+
+                            {% if current_output.get("errors") %}
+
+                            <div class="contract-block">
+
+                                <strong>
+                                    Verification Errors
+                                </strong>
+
+                                <ul>
+
+                                    {% for error in
+                                    current_output["errors"]
+                                    %}
+
+                                    <li>
+                                        {{ error }}
+                                    </li>
+
+                                    {% endfor %}
+
+                                </ul>
+
+                            </div>
+
+                            {% endif %}
+
+
+                            {% if current_output.get("preconditions") %}
+
+                            <div class="contract-block">
+
+                                <strong>
+                                    Preconditions
+                                </strong>
+
+                                <p>
+                                    {{ current_output["preconditions"] }}
+                                </p>
+
+                            </div>
+
+                            {% endif %}
+
+
+                            {% if current_output.get("constraints") %}
+
+                            <div class="contract-block">
+
+                                <strong>
+                                    Constraints
+                                </strong>
+
+                                <p>
+                                    {{ current_output["constraints"] }}
+                                </p>
+
+                            </div>
+
+                            {% endif %}
+
+                        </div>
+
+                        {% endif %}
+
+
+                        <!-- ================================================= -->
+                        <!-- GENERAL DICTIONARY OUTPUT -->
+                        <!-- ================================================= -->
+
+                        {% if current_output.get(
+                        "recognized_command"
+                        ) %}
+
+                        <div class="contract-output">
+
+                            <h3>
+                                Command Recognition
+                            </h3>
+
+
+                            <div class="contract-row">
+
+                                <span>
+                                    Command
+                                </span>
+
+                                <strong>
+
+                                    {{
+                                    current_output[
+                                    "recognized_command"
+                                    ]
+                                    }}
+
+                                </strong>
+
+                            </div>
+
+
+                            <div class="contract-row">
+
+                                <span>
+                                    Detected Task
+                                </span>
+
+                                <strong>
+
+                                    {{
+                                    current_output.get(
+                                    "detected_task",
+                                    "None"
+                                    )
+                                    }}
+
+                                </strong>
+
+                            </div>
+
+
+                            <div class="contract-row">
+
+                                <span>
+                                    Confidence Score
+                                </span>
+
+                                <strong>
+
+                                    {{
+                                    current_output.get(
+                                    "confidence_score",
+                                    "None"
+                                    )
+                                    }}
+
+                                </strong>
+
+                            </div>
+
+                        </div>
+
+                        {% endif %}
+
+
+                        {% else %}
+
+                        <div class="empty-output">
+
+                            No active backend output yet.
+
+                            <br><br>
+
+                            Start a voice command to begin
+                            the workflow.
+
+                        </div>
+
+                        {% endif %}
+
+                    </div>
+
+                </div>
+
+
+                <!-- ================================================= -->
+                <!-- TASK INFORMATION -->
+                <!-- ================================================= -->
+
+                <div class="workflow-panel">
+
+                    <div class="panel-header">
+
+                        <h2>
+                            Task Information
+                        </h2>
+
+                    </div>
+
+
+                    <div class="task-information">
+
+
+                        <div class="info-row">
+
+                            <span>
+                                Command
+                            </span>
+
+                            <strong id="taskCommand">
+                                {{ state["command"] }}
+                            </strong>
+
+                        </div>
+
+
+                        <div class="info-row">
+
+                            <span>
+                                Task ID
+                            </span>
+
+                            <strong id="taskId">
+                                {{ state["task_id"] }}
+                            </strong>
+
+                        </div>
+
+
+                        <div class="info-row">
+
+                            <span>
+                                Agent
+                            </span>
+
+                            <strong id="taskAgent">
+                                {{ state["agent"] }}
+                            </strong>
+
+                        </div>
+
+
+                        <div class="info-row">
+
+                            <span>
+                                Machine
+                            </span>
+
+                            <strong id="taskMachine">
+                                {{ state.get(
+                                "machine",
+                                "None"
+                                ) }}
+                            </strong>
+
+                        </div>
+
+
+                        <div class="info-row">
+
+                            <span>
+                                Task
+                            </span>
+
+                            <strong id="taskName">
+                                {{ state["task"] }}
+                            </strong>
+
+                        </div>
+
+
+                        <div class="info-row">
+
+                            <span>
+                                Crop
+                            </span>
+
+                            <strong id="taskCrop">
+                                {{ state.get(
+                                "crop",
+                                "None"
+                                ) }}
+                            </strong>
+
+                        </div>
+
+
+                        <div class="info-row">
+
+                            <span>
+                                Field
+                            </span>
+
+                            <strong id="taskField">
+                                {{ state["field"] }}
+                            </strong>
+
+                        </div>
+
+
+                        <div class="info-row">
+
+                            <span>
+                                Verification
+                            </span>
+
+                            <strong id="taskVerification">
+                                {{ state["verification"] }}
+                            </strong>
+
+                        </div>
+
+
+                        <div class="info-row">
+
+                            <span>
+                                Execution
+                            </span>
+
+                            <strong id="taskExecution">
+                                {{ state["execution"] }}
+                            </strong>
+
+                        </div>
+
+
+                        <div class="info-row">
+
+                            <span>
+                                Monitoring
+                            </span>
+
+                            <strong id="taskMonitoring">
+                                {{ state["monitoring"] }}
+                            </strong>
+
+                        </div>
+
+
+                    </div>
+
+
+                    <!-- ================================================= -->
+                    <!-- WORKFLOW PROGRESS -->
+                    <!-- ================================================= -->
+
+                    <div id="workflowProgress" class="progress-section">
+
+                        <h3>
+                            Workflow Progress
+                        </h3>
+
+
+                        {% if state.get("completed_steps") %}
+
+                        <ul class="completed-steps">
+
+                            {% for step in
+                            state["completed_steps"]
+                            %}
+
+                            <li>
+                                ✓ {{ step }}
+                            </li>
+
+                            {% endfor %}
+
+                        </ul>
+
+                        {% else %}
+
+                        <p class="no-progress">
+
+                            No workflow steps completed yet.
+
+                        </p>
+
+                        {% endif %}
+
+                    </div>
+
+                </div>
+
+
+            </div>
+
+        </section>
+
+
+    </div>
+
+
+    <!-- ================================================= -->
+    <!-- JAVASCRIPT -->
+    <!-- ================================================= -->
+
+    <script>
+
+        let queueCount = 0;
+        /* ================================================= */
+        /* ELEMENTS */
+        /* ================================================= */
+
+
+        const voiceButton =
+            document.getElementById(
+                "voiceButton"
+            );
+
+
+        const voiceStatus =
+            document.getElementById(
+                "voiceStatus"
+            );
+
+
+        const commandHeard =
+            document.getElementById(
+                "commandHeard"
+            );
+
+
+        const heardCommand =
+            document.getElementById(
+                "heardCommand"
+            );
+
+
+        const commandSelection =
+            document.getElementById(
+                "commandSelection"
+            );
+
+
+        const continueProcessingPanel =
+            document.getElementById(
+                "continueProcessing"
+            );
+
+
+        /* ================================================= */
+        /* START VOICE */
+        /* ================================================= */
+
+
+        voiceButton.addEventListener(
+            "click",
+            function () {
+
+                startVoice();
+
+            }
+        );
+
+
+        function startVoice() {
+
+            voiceButton.disabled = true;
+
+
+            voiceStatus.innerHTML =
+                "Starting voice command workflow...";
+
+
+            hideCommandSelection();
+
+            hideContinueProcessing();
+
+
+            fetch("/start_voice")
+
+                .then(
+                    response => response.json()
+                )
+
+                .then(
+                    data => {
+
+                        if (!data.success) {
+
+                            voiceStatus.innerHTML =
+                                data.message;
+
+                            voiceButton.disabled =
+                                false;
+
+                            return;
+
+                        }
+
+
+                        pollWorkflowStatus();
+
+                    }
+                )
+
+                .catch(
+                    error => {
+
+                        console.error(
+                            "Start voice error:",
+                            error
+                        );
+
+
+                        voiceStatus.innerHTML =
+                            "Error while starting voice command.";
+
+
+                        voiceButton.disabled =
+                            false;
+
+                    }
+                );
+
+        }
+
+
+        /* ================================================= */
+        /* POLL BACKEND STATUS */
+        /* ================================================= */
+
+
+        function pollWorkflowStatus() {
+
+            fetch("/workflow_status")
+
+                .then(
+                    response => response.json()
+                )
+
+                .then(
+                    state => {
+
+
+                        updateDashboard(
+                            state
+                        );
+
+
+                        if (
+                            state.workflow_running
+                        ) {
+
+                            setTimeout(
+                                pollWorkflowStatus,
+                                700
+                            );
+
+                        }
+
+                        else {
+
+                            voiceButton.disabled =
+                                state.needs_selection ||
+                                state.needs_continue ||
+                                state.needs_contract_check;
+
+                        }
+
+                    }
+                )
+
+                .catch(
+                    error => {
+
+                        console.error(
+                            "Workflow status error:",
+                            error
+                        );
+
+
+                        setTimeout(
+                            pollWorkflowStatus,
+                            1000
+                        );
+
+                    }
+                );
+
+        }
+
+
+        /* ================================================= */
+        /* UPDATE DASHBOARD */
+        /* ================================================= */
+
+
+        function updateDashboard(
+            state
+        ) {
+
+
+            /* --------------------------------------------- */
+            /* CURRENT STAGE */
+            /* --------------------------------------------- */
+
+
+            const currentStage =
+                document.getElementById(
+                    "currentStage"
+                );
+
+
+            if (currentStage) {
+
+                currentStage.innerHTML =
+                    escapeHtml(
+                        state.current_stage ||
+                        "Waiting for voice command"
+                    );
+
+            }
+
+
+            /* --------------------------------------------- */
+            /* VOICE STATUS */
+            /* --------------------------------------------- */
+
+
+            if (
+                state.current_stage
+            ) {
+
+                voiceStatus.innerHTML =
+                    escapeHtml(
+                        state.current_stage
+                    );
+
+            }
+
+
+            /* --------------------------------------------- */
+            /* COMMAND HEARD */
+            /* --------------------------------------------- */
+
+
+            if (
+                state.command &&
+                state.command !==
+                "No command yet"
+            ) {
+
+
+                if (commandHeard) {
+
+                    commandHeard.style.display =
+                        "block";
+
+                }
+
+
+                if (heardCommand) {
+
+                    heardCommand.innerHTML =
+                        "&quot;" +
+                        escapeHtml(
+                            state.command
+                        ) +
+                        "&quot;";
+
+                }
+
+            }
+
+
+            /* --------------------------------------------- */
+            /* TASK INFORMATION */
+            /* --------------------------------------------- */
+
+
+            updateText(
+                "taskCommand",
+                state.command
+            );
+
+
+            updateText(
+                "taskId",
+                state.task_id
+            );
+
+
+            updateText(
+                "taskAgent",
+                state.agent
+            );
+
+
+            updateText(
+                "taskMachine",
+                state.machine
+            );
+
+
+            updateText(
+                "taskName",
+                state.task
+            );
+
+
+            updateText(
+                "taskCrop",
+                state.crop
+            );
+
+
+            updateText(
+                "taskField",
+                state.field
+            );
+
+
+            updateText(
+                "taskVerification",
+                state.verification
+            );
+
+
+            updateText(
+                "taskExecution",
+                state.execution
+            );
+
+
+            updateText(
+                "taskMonitoring",
+                state.monitoring
+            );
+
+
+            /* --------------------------------------------- */
+            /* LIVE BACKEND OUTPUT */
+            /* --------------------------------------------- */
+
+
+            updateLiveOutput(
+                state.current_output
+            );
+
+
+            /* --------------------------------------------- */
+            /* WORKFLOW PROGRESS */
+            /* --------------------------------------------- */
+
+
+            updateWorkflowProgress(
+                state.completed_steps
+            );
+
+
+            /* --------------------------------------------- */
+            /* COMMAND SELECTION */
+            /* --------------------------------------------- */
+
+
+            if (
+                state.needs_selection
+            ) {
+
+                showCommandSelection();
+
+            }
+
+            else {
+
+                hideCommandSelection();
+
+            }
+
+
+            /* --------------------------------------------- */
+            /* CONTINUE PROCESSING */
+            /* --------------------------------------------- */
+
+
+            if (
+                state.needs_continue
+            ) {
+
+                showContinueProcessing();
+
+            }
+
+            else {
+
+                hideContinueProcessing();
+
+            }
+
+        }
+
+
+        /* ================================================= */
+        /* UPDATE TEXT */
+        /* ================================================= */
+
+
+        function updateText(
+            elementId,
+            value
+        ) {
+
+
+            const element =
+                document.getElementById(
+                    elementId
+                );
+
+
+            if (!element) {
+
+                return;
+
+            }
+
+
+            if (
+                value === null ||
+                value === undefined ||
+                value === ""
+            ) {
+
+                element.innerHTML =
+                    "None";
+
+            }
+
+            else {
+
+                element.innerHTML =
+                    escapeHtml(
+                        String(value)
+                    );
+
+            }
+
+        }
+
+
+        /* ================================================= */
+        /* LIVE BACKEND OUTPUT */
+        /* ================================================= */
+
+
+        function updateLiveOutput(
+            output
+        ) {
+
+
+            const liveOutput =
+                document.getElementById(
+                    "liveOutput"
+                );
+
+
+            if (!liveOutput) {
+
+                return;
+
+            }
+
+
+            if (!output) {
+
+                return;
+
+            }
+
+
+            let html = "";
+
+
+            /* --------------------------------------------- */
+            /* MESSAGE */
+            /* --------------------------------------------- */
+
+
+            if (
+                output.message
+            ) {
+
+                html += `
+
+                <div class="output-message">
+
+                    ${escapeHtml(
+                    output.message
+                )}
+
+                </div>
+
+            `;
+
+            }
+
+
+            /* --------------------------------------------- */
+            /* COMMAND RECOGNITION */
+            /* --------------------------------------------- */
+
+
+            if (
+                output.recognized_command
+            ) {
+
+                html += `
+
+                <div class="contract-output">
+
+                    <h3>
+                        Command Recognition
+                    </h3>
+
+
+                    <div class="contract-row">
+
+                        <span>
+                            Command
+                        </span>
+
+
+                        <strong>
+
+                            ${escapeHtml(
+                    output.recognized_command
+                )}
+
+                        </strong>
+
+                    </div>
+
+
+                    <div class="contract-row">
+
+                        <span>
+                            Detected Task
+                        </span>
+
+
+                        <strong>
+
+                            ${escapeHtml(
+                    output.detected_task ||
+                    "None"
+                )}
+
+                        </strong>
+
+                    </div>
+
+
+                    <div class="contract-row">
+
+                        <span>
+                            Confidence Score
+                        </span>
+
+
+                        <strong>
+
+                            ${output.confidence_score ??
+                    "None"}
+
+                        </strong>
+
+                    </div>
+
+                </div>
+
+            `;
+
+            }
+
+
+            /* --------------------------------------------- */
+            /* GENERATED CONTRACT */
+            /* --------------------------------------------- */
+
+
+            if (
+                output.task_id
+            ) {
+
+                html += `
+
+                <div class="contract-output">
+
+                    <h3>
+                        Generated Task Contract
+                    </h3>
+
+
+                    <div class="contract-row">
+
+                        <span>
+                            Task ID
+                        </span>
+
+                        <strong>
+
+                            ${escapeHtml(
+                    output.task_id
+                )}
+
+                        </strong>
+
+                    </div>
+
+
+                    <div class="contract-row">
+
+                        <span>
+                            Agent
+                        </span>
+
+                        <strong>
+
+                            ${escapeHtml(
+                    output.agent ||
+                    "None"
+                )}
+
+                        </strong>
+
+                    </div>
+
+
+                    <div class="contract-row">
+
+                        <span>
+                            Machine
+                        </span>
+
+                        <strong>
+
+                            ${escapeHtml(
+                    output.machine ||
+                    "None"
+                )}
+
+                        </strong>
+
+                    </div>
+
+
+                    <div class="contract-row">
+
+                        <span>
+                            Task
+                        </span>
+
+                        <strong>
+
+                            ${escapeHtml(
+                    output.task ||
+                    "None"
+                )}
+
+                        </strong>
+
+                    </div>
+
+
+                    <div class="contract-row">
+
+                        <span>
+                            Crop
+                        </span>
+
+                        <strong>
+
+                            ${escapeHtml(
+                    output.crop ||
+                    "None"
+                )}
+
+                        </strong>
+
+                    </div>
+
+
+                    <div class="contract-row">
+
+                        <span>
+                            Field
+                        </span>
+
+                        <strong>
+
+                            ${escapeHtml(
+                    output.field ||
+                    "None"
+                )}
+
+                        </strong>
+
+                    </div>
+
+
+                    <div class="contract-block">
+
+                        <strong>
+                            Preconditions
+                        </strong>
+
+                        <ul>
+
+                            ${makeList(
+                    output.preconditions
+                )}
+
+                        </ul>
+
+                    </div>
+
+
+                    <div class="contract-block">
+
+                        <strong>
+                            Required Resources
+                        </strong>
+
+                        <ul>
+
+                            ${makeList(
+                    output.required_resources
+                )}
+
+                        </ul>
+
+                    </div>
+
+
+                    <div class="contract-block">
+
+                        <strong>
+                            Constraints
+                        </strong>
+
+                        <ul>
+
+                            ${makeList(
+                    output.constraints
+                )}
+
+                        </ul>
+
+                    </div>
+
+
+                    <div class="contract-block">
+
+                        <strong>
+                            Expected Outcome
+                        </strong>
+
+                        <p>
+
+                            ${escapeHtml(
+                    output.expected_outcome ||
+                    "None"
+                )}
+
+                        </p>
+
+                    </div>
+
+                </div>
+
+            `;
+
+            }
+
+
+            /* --------------------------------------------- */
+            /* INDIVIDUAL CONTRACT VERIFICATION */
+            /* --------------------------------------------- */
+
+
+            if (
+                output.verified !== undefined &&
+                output.verified !== null &&
+                output.conflicts === undefined
+            ) {
+
+
+                html += `
+
+                <div class="verification-output">
+
+                    <h3>
+                        Contract Verification
+                    </h3>
+
+
+                    <div class="verification-status">
+
+                        ${output.verified
+                        ? "APPROVED"
+                        : "REJECTED"
+                    }
+
+                    </div>
+
+            `;
+
+
+                if (
+                    output.errors &&
+                    output.errors.length
+                ) {
+
+                    html += `
+
+                    <div class="contract-block">
+
+                        <strong>
+                            Verification Errors
+                        </strong>
+
+                        <ul>
+
+                            ${makeList(
+                        output.errors
+                    )}
+
+                        </ul>
+
+                    </div>
+
+                `;
+
+                }
+
+
+                if (
+                    output.preconditions
+                ) {
+
+                    html += `
+
+                    <div class="contract-block">
+
+                        <strong>
+                            Preconditions
+                        </strong>
+
+                        <p>
+
+                            ${escapeHtml(
+                        output.preconditions
+                    )}
+
+                        </p>
+
+                    </div>
+
+                `;
+
+                }
+
+
+                if (
+                    output.constraints
+                ) {
+
+                    html += `
+
+                    <div class="contract-block">
+
+                        <strong>
+                            Constraints
+                        </strong>
+
+                        <p>
+
+                            ${escapeHtml(
+                        output.constraints
+                    )}
+
+                        </p>
+
+                    </div>
+
+                `;
+
+                }
+
+
+                /* --------------------------------------------- */
+                /* TASK QUEUE CONTROLS */
+                /* --------------------------------------------- */
+
+                if (
+                    output.verified
+                ) {
+
+                    html += `
+
+                    <div
+                        class="command-selection"
+                        style="margin-top: 20px;"
+                    >
+
+                        <h3>
+                            Task Queue
+                        </h3>
+
+                        <p>
+                            Contract verified successfully.
+                            Add this task to the queue or
+                            finish task collection.
+                        </p>
+
+
+                        <button
+                            type="button"
+                            class="selection-button"
+                            onclick="addTask()"
+                        >
+                            ADD TASK
+                        </button>
+
+
+                        <button
+                            type="button"
+                            class="selection-button"
+                            onclick="finishTasks()"
+                        >
+                            FINISH TASKS
+                        </button>
+
+                    </div>
+
+                `;
+
+                }
+
+
+                html += `
+
+                </div>
+
+            `;
+
+            }
+
+
+            /* --------------------------------------------- */
+            /* MULTI-AGENT VERIFICATION */
+            /* --------------------------------------------- */
+
+
+            if (
+                output.verified !== undefined &&
+                output.conflicts !== undefined
+            ) {
+
+                html += `
+
+                <div class="verification-output">
+
+                    <h3>
+                        Multi-Agent Contract Verification
+                    </h3>
+
+
+                    <div class="verification-status">
+
+                        ${output.verified
+                        ? "APPROVED"
+                        : "REJECTED"
+                    }
+
+                    </div>
+
+            `;
+
+
+                /* --------------------------------------------- */
+                /* APPROVED */
+                /* --------------------------------------------- */
+
+
+                if (
+                    output.verified
+                ) {
+
+                    html += `
+
+                    <p>
+                        No conflicts detected between
+                        the queued task contracts.
+                    </p>
+
+                `;
+
+                }
+
+
+                /* --------------------------------------------- */
+                /* REJECTED */
+                /* --------------------------------------------- */
+
+
+                else {
+
+                    html += `
+
+                    <p>
+                        Conflicts detected:
+                        ${output.conflicts.length}
+                    </p>
+
+                `;
+
+
+                    output.conflicts.forEach(
+                        conflict => {
+
+                            html += `
+
+                            <div
+                                class="contract-output"
+                                style="margin-top: 10px;"
+                            >
+
+                                <p>
+
+                                    <strong>
+                                        Conflict Type:
+                                    </strong>
+
+                                    ${escapeHtml(
+                                conflict.type
+                            )}
+
+                                </p>
+
+
+                                <p>
+
+                                    <strong>
+                                        Tasks:
+                                    </strong>
+
+                                    ${escapeHtml(
+                                conflict.tasks.join(", ")
+                            )}
+
+                                </p>
+
+                        `;
+
+
+                            if (
+                                conflict.field
+                            ) {
+
+                                html += `
+
+                                <p>
+
+                                    <strong>
+                                        Field:
+                                    </strong>
+
+                                    ${escapeHtml(
+                                    conflict.field
+                                )}
+
+                                </p>
+
+                            `;
+
+                            }
+
+
+                            html += `
+
+                                <p>
+
+                                    <strong>
+                                        Reason:
+                                    </strong>
+
+                                    ${escapeHtml(
+                                conflict.message
+                            )}
+
+                                </p>
+
+                            </div>
+
+                        `;
+
+                        }
+                    );
+
+
+                    html += `
+
+                    <p style="margin-top: 15px;">
+
+                        <strong>
+                            Execution is blocked.
+                        </strong>
+
+                    </p>
+
+                `;
+
+                }
+
+
+                html += `
+
+                </div>
+
+            `;
+
+            }
+
+
+            /* --------------------------------------------- */
+            /* DISPLAY OUTPUT */
+            /* --------------------------------------------- */
+
+
+            if (html) {
+
+                liveOutput.innerHTML =
+                    html;
+
+            }
+
+        }
+
+
+        /* ================================================= */
+        /* WORKFLOW PROGRESS */
+        /* ================================================= */
+
+
+        function updateWorkflowProgress(
+            steps
+        ) {
+
+
+            const progress =
+                document.getElementById(
+                    "workflowProgress"
+                );
+
+
+            if (!progress) {
+
+                return;
+
+            }
+
+
+            if (
+                !steps ||
+                steps.length === 0
+            ) {
+
+                progress.innerHTML = `
+
+                <h3>
+                    Workflow Progress
+                </h3>
+
+
+                <p class="no-progress">
+
+                    No workflow steps completed yet.
+
+                </p>
+
+            `;
+
+                return;
+
+            }
+
+
+            let html = `
+
+            <h3>
+                Workflow Progress
+            </h3>
+
+
+            <ul class="completed-steps">
+
+        `;
+
+
+            steps.forEach(
+                step => {
+
+                    html += `
+
+                    <li>
+                        ✓ ${escapeHtml(step)}
+                    </li>
+
+                `;
+
+                }
+            );
+
+
+            html += `
+
+            </ul>
+
+        `;
+
+
+            progress.innerHTML =
+                html;
+
+        }
+
+
+        /* ================================================= */
+        /* SHOW COMMAND SELECTION */
+        /* ================================================= */
+
+
+        function showCommandSelection() {
+
+            if (!commandSelection) {
+
+                return;
+
+            }
+
+
+            commandSelection.style.display =
+                "block";
+
+        }
+
+
+        /* ================================================= */
+        /* HIDE COMMAND SELECTION */
+        /* ================================================= */
+
+
+        function hideCommandSelection() {
+
+            if (!commandSelection) {
+
+                return;
+
+            }
+
+
+            commandSelection.style.display =
+                "none";
+
+        }
+
+
+        /* ================================================= */
+        /* SHOW CONTINUE PROCESSING */
+        /* ================================================= */
+
+
+        function showContinueProcessing() {
+
+            if (!continueProcessingPanel) {
+
+                return;
+
+            }
+
+
+            continueProcessingPanel.style.display =
+                "block";
+
+        }
+
+
+        /* ================================================= */
+        /* HIDE CONTINUE PROCESSING */
+        /* ================================================= */
+
+
+        function hideContinueProcessing() {
+
+            if (!continueProcessingPanel) {
+
+                return;
+
+            }
+
+
+            continueProcessingPanel.style.display =
+                "none";
+
+        }
+
+
+        /* ================================================= */
+        /* CONTINUE PROCESSING */
+        /* ================================================= */
+
+
+        function continueProcessing() {
+
+            hideContinueProcessing();
+
+            voiceButton.disabled = true;
+
+            voiceStatus.innerHTML =
+                "Starting task processing...";
+
+
+            fetch("/continue_processing")
+
+                .then(
+                    response => response.json()
+                )
+
+                .then(
+                    data => {
+
+                        if (!data.success) {
+
+                            voiceStatus.innerHTML =
+                                data.message;
+
+                            voiceButton.disabled =
+                                false;
+
+                            return;
+
+                        }
+
+
+                        pollWorkflowStatus();
+
+                    }
+                )
+
+                .catch(
+                    error => {
+
+                        console.error(
+                            "Continue processing error:",
+                            error
+                        );
+
+
+                        voiceStatus.innerHTML =
+                            "Error while continuing task processing.";
+
+
+                        voiceButton.disabled =
+                            false;
+
+                    }
+                );
+
+        }
+
+
+        /* ================================================= */
+        /* CHECK CONTRACT */
+        /* ================================================= */
+
+
+        function checkContract() {
+
+            voiceButton.disabled = true;
+
+            voiceStatus.innerHTML =
+                "Checking task contract...";
+
+
+            fetch("/check_contract")
+
+                .then(
+                    response => response.json()
+                )
+
+                .then(
+                    data => {
+
+                        if (!data.success) {
+
+                            voiceStatus.innerHTML =
+                                data.message;
+
+                            voiceButton.disabled =
+                                false;
+
+                            return;
+
+                        }
+
+
+                        pollWorkflowStatus();
+
+                    }
+                )
+
+                .catch(
+                    error => {
+
+                        console.error(
+                            "Contract check error:",
+                            error
+                        );
+
+
+                        voiceStatus.innerHTML =
+                            "Error while checking contract.";
+
+
+                        voiceButton.disabled =
+                            false;
+
+                    }
+
+                );
+
+        }
+
+
+        /* ================================================= */
+        /* ADD TASK */
+        /* ================================================= */
+
+
+        function addTask() {
+
+            voiceStatus.innerHTML =
+                "Adding task to queue...";
+
+
+            fetch("/add_task")
+
+                .then(
+                    response => response.json()
+                )
+
+                .then(
+                    data => {
+
+                        if (!data.success) {
+
+                            voiceStatus.innerHTML =
+                                data.message;
+
+                            return;
+
+                        }
+                        // Store the queue count so it is not lost
+                        // when the live output is refreshed.
+                        queueCount = data.queue_count;
+
+                        voiceStatus.innerHTML =
+                            "Task added to queue successfully.";
+
+
+                        const queueStatus =
+                            document.getElementById(
+                                "queueStatus"
+                            );
+
+                        window.queueCount = data.queue_count;
+
+                        if (queueStatus) {
+
+                            queueStatus.innerHTML =
+                                "Tasks in queue: " +
+                                data.queue_count;
+
+                        }
+
+
+                        pollWorkflowStatus();
+
+                    }
+                )
+
+                .catch(
+                    error => {
+
+                        console.error(
+                            "Add task error:",
+                            error
+                        );
+
+
+                        voiceStatus.innerHTML =
+                            "Error while adding task.";
+
+                    }
+                );
+
+        }
+
+
+        /* ================================================= */
+        /* FINISH TASKS */
+        /* ================================================= */
+
+
+        function finishTasks() {
+
+            voiceButton.disabled = true;
+
+            voiceStatus.innerHTML =
+                "Checking all queued tasks for conflicts...";
+
+
+            fetch("/finish_tasks")
+
+                .then(
+                    response => response.json()
+                )
+
+                .then(
+                    data => {
+
+                        if (!data.success) {
+
+                            voiceStatus.innerHTML =
+                                data.message;
+
+                            voiceButton.disabled =
+                                false;
+
+                            return;
+
+                        }
+
+
+                        pollWorkflowStatus();
+
+                    }
+                )
+
+                .catch(
+                    error => {
+
+                        console.error(
+                            "Finish tasks error:",
+                            error
+                        );
+
+
+                        voiceStatus.innerHTML =
+                            "Error while checking queued tasks.";
+
+
+                        voiceButton.disabled =
+                            false;
+
+                    }
+                );
+
+        }
+
+
+        /* ================================================= */
+        /* SPEAK AGAIN */
+        /* ================================================= */
+
+
+        function startVoiceAgain() {
+
+            hideCommandSelection();
+
+            hideContinueProcessing();
+
+            startVoice();
+
+        }
+
+
+        /* ================================================= */
+        /* LIST HELPER */
+        /* ================================================= */
+
+
+        function makeList(
+            items
+        ) {
+
+
+            if (
+                !items ||
+                items.length === 0
+            ) {
+
+                return "<li>None</li>";
+
+            }
+
+
+            return items
+                .map(
+                    item => {
+
+                        return `
+                        <li>
+                            ${escapeHtml(item)}
+                        </li>
+                    `;
+
+                    }
+                )
+                .join("");
+
+        }
+
+
+        /* ================================================= */
+        /* HTML ESCAPE */
+        /* ================================================= */
+
+
+        function escapeHtml(
+            value
+        ) {
+
+
+            if (
+                value === null ||
+                value === undefined
+            ) {
+
+                return "";
+
+            }
+
+
+            return String(value)
+
+                .replace(
+                    /&/g,
+                    "&amp;"
+                )
+
+                .replace(
+                    /</g,
+                    "&lt;"
+                )
+
+                .replace(
+                    />/g,
+                    "&gt;"
+                )
+
+                .replace(
+                    /"/g,
+                    "&quot;"
+                )
+
+                .replace(
+                    /'/g,
+                    "&#039;"
+                );
+
+        }
+
+
+    </script>
+
+
+</body>
+
+</html>
