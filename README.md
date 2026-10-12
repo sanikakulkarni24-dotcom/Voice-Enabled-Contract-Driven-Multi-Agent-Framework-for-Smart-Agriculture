@@ -177,6 +177,3 @@ When execution violations occur, the recovery module can select retry or abort a
 - More extensive testing of multi-agent task compatibility.
 - Integration with real agricultural sensors and machinery in a controlled environment.
 
-## License
-
-No license has been specified yet. Add an appropriate open-source license if you intend to permit others to reuse or modify this project.
