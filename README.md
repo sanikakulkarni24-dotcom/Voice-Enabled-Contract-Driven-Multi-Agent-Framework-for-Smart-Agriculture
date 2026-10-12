@@ -91,8 +91,8 @@ smartagriculture/
 ### 1. Clone the repository
 
 ```powershell
-git clone YOUR_GITHUB_REPOSITORY_URL
-cd YOUR_REPOSITORY_NAME
+git clone https://github.com/sanikakulkarni24-dotcom/Voice-Enabled-Contract-Driven-Multi-Agent-Framework-for-Smart-Agriculture
+cd Voice-Enabled-Contract-Driven-Multi-Agent-Framework-for-Smart-Agriculture
 ```
 
 Replace the placeholders with your actual GitHub repository URL and repository name.
