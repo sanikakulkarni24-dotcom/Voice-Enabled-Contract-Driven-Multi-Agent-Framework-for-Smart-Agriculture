@@ -1,19 +1,14 @@
+
 from farm_simulation import farm_state
 
 
-# ------------------------------------------------
-# FIELD NORMALIZATION
-# ------------------------------------------------
-
 def normalize_field_name(field_name):
-
     if not field_name:
         return None
 
     field_name = str(field_name).strip()
 
     if field_name.lower().startswith("field "):
-
         letter = field_name[6:].strip().upper()
 
         if letter in ["A", "B", "C"]:
@@ -25,442 +20,243 @@ def normalize_field_name(field_name):
     return field_name
 
 
-# ------------------------------------------------
-# CHECK DUPLICATE AGENTS
-# ------------------------------------------------
+def verify_multi_agent_contracts(contracts):
+    conflicts = []
+    task_statuses = {}
+    conflict_reasons = {}
 
-def check_agent_conflicts(contracts, conflicts):
+    approved_contracts = []
+    blocked_contracts = []
 
-    agents_in_use = {}
-
+    # Process tasks in their original order.
     for contract in contracts:
+        task_id = contract.get("task_id", "UNKNOWN")
+        task_statuses[task_id] = "APPROVED"
+        conflict_reasons[task_id] = []
 
-        agent = contract.get("agent")
-        task_id = contract.get(
-            "task_id",
-            "UNKNOWN"
-        )
-
-        if not agent:
-            continue
-
-        if agent in agents_in_use:
-
-            previous_task = agents_in_use[agent]
-
-            conflicts.append({
-                "type": "agent_conflict",
-                "tasks": [
-                    previous_task,
-                    task_id
-                ],
-                "message":
-                    f"Agent '{agent}' is assigned to "
-                    f"multiple tasks: "
-                    f"{previous_task} and {task_id}."
-            })
-
-        else:
-
-            agents_in_use[agent] = task_id
-
-
-# ------------------------------------------------
-# CHECK MACHINE CONFLICTS
-# ------------------------------------------------
-
-def check_machine_conflicts(
-    contracts,
-    conflicts
-):
-
-    machines_in_use = {}
-
-    for contract in contracts:
-
-        machine = contract.get("machine")
-
-        task_id = contract.get(
-            "task_id",
-            "UNKNOWN"
-        )
-
-        if not machine:
-            continue
-
-        if machine in machines_in_use:
-
-            previous_task = machines_in_use[
-                machine
-            ]
-
-            conflicts.append({
-                "type": "machine_conflict",
-                "tasks": [
-                    previous_task,
-                    task_id
-                ],
-                "message":
-                    f"Machine '{machine}' is required "
-                    f"by multiple tasks: "
-                    f"{previous_task} and {task_id}."
-            })
-
-        else:
-
-            machines_in_use[machine] = task_id
-
-
-# ------------------------------------------------
-# CHECK FIELD CONFLICTS
-# ------------------------------------------------
-
-def check_field_conflicts(
-    contracts,
-    conflicts
-):
-
-    field_tasks = {}
-
-    for contract in contracts:
-
-        field = normalize_field_name(
+        current_agent = contract.get("agent")
+        current_machine = contract.get("machine")
+        current_field = normalize_field_name(
             contract.get("field")
         )
+        current_task = str(
+            contract.get("task", "")
+        ).lower()
+        current_crop = str(
+            contract.get("crop", "")
+        ).strip().lower()
 
-        task_id = contract.get(
-            "task_id",
-            "UNKNOWN"
-        )
+        task_conflicts = []
 
-        if not field:
-            continue
-
-        if field.lower() == "unknown":
-            continue
-
-        if field not in farm_state["fields"]:
-            continue
-
-        if field not in field_tasks:
-
-            field_tasks[field] = []
-
-        field_tasks[field].append(
-            contract
-        )
-
-    for field, tasks in field_tasks.items():
-
-        if len(tasks) < 2:
-            continue
-
-        for i in range(len(tasks)):
-
-            for j in range(
-                i + 1,
-                len(tasks)
-            ):
-
-                task_1 = tasks[i]
-                task_2 = tasks[j]
-
-                task_1_id = task_1.get(
-                    "task_id",
-                    "UNKNOWN"
-                )
-
-                task_2_id = task_2.get(
-                    "task_id",
-                    "UNKNOWN"
-                )
-
-                operation_1 = str(
-                    task_1.get(
-                        "task",
-                        ""
-                    )
-                ).lower()
-
-                operation_2 = str(
-                    task_2.get(
-                        "task",
-                        ""
-                    )
-                ).lower()
-
-                # Harvesting conflicts with
-                # another operation on the same field.
-
-                if (
-                    "harvest" in operation_1
-                    or
-                    "harvest" in operation_2
-                ):
-
-                    conflicts.append({
-                        "type": "field_conflict",
-                        "tasks": [
-                            task_1_id,
-                            task_2_id
-                        ],
-                        "field": field,
-                        "message":
-                            f"Multiple incompatible "
-                            f"operations are assigned "
-                            f"to {field}: "
-                            f"{task_1_id} and "
-                            f"{task_2_id}."
-                    })
-
-
-# ------------------------------------------------
-# CHECK RESOURCE TYPE CONFLICTS
-# ------------------------------------------------
-
-def check_resource_conflicts(
-    contracts,
-    conflicts
-):
-
-    resource_usage = {}
-
-    for contract in contracts:
-
-        task_id = contract.get(
-            "task_id",
-            "UNKNOWN"
-        )
-
-        resources = contract.get(
-            "required_resources",
-            []
-        )
-
-        if isinstance(resources, str):
-
-            resources = [resources]
-
-        for resource in resources:
-
-            resource_name = str(
-                resource
+        # Compare this task only with previously approved tasks.
+        for previous in approved_contracts:
+            previous_id = previous.get(
+                "task_id", "UNKNOWN"
+            )
+            previous_agent = previous.get("agent")
+            previous_machine = previous.get("machine")
+            previous_field = normalize_field_name(
+                previous.get("field")
+            )
+            previous_task = str(
+                previous.get("task", "")
+            ).lower()
+            previous_crop = str(
+                previous.get("crop", "")
             ).strip().lower()
 
-            if resource_name not in resource_usage:
+            # Agent conflict.
+            if (
+                current_agent
+                and current_agent == previous_agent
+            ):
+                task_conflicts.append({
+                    "type": "agent_conflict",
+                    "tasks": [previous_id, task_id],
+                    "message": (
+                        f"Agent '{current_agent}' is already "
+                        f"assigned to approved task {previous_id}."
+                    )
+                })
 
-                resource_usage[
-                    resource_name
-                ] = []
+            # Machine conflict.
+            if (
+                current_machine
+                and current_machine == previous_machine
+            ):
+                task_conflicts.append({
+                    "type": "machine_conflict",
+                    "tasks": [previous_id, task_id],
+                    "message": (
+                        f"Machine '{current_machine}' is already "
+                        f"assigned to approved task {previous_id}."
+                    )
+                })
 
-            resource_usage[
-                resource_name
-            ].append(task_id)
+            # Field conflicts: harvesting conflicts with another
+            # operation on the same valid field.
+            if (
+                current_field
+                and current_field == previous_field
+                and current_field in farm_state["fields"]
+                and (
+                    "harvest" in current_task
+                    or "harvest" in previous_task
+                )
+            ):
+                task_conflicts.append({
+                    "type": "field_conflict",
+                    "tasks": [previous_id, task_id],
+                    "field": current_field,
+                    "message": (
+                        f"Incompatible operations are assigned to "
+                        f"{current_field}: {previous_id} and {task_id}."
+                    )
+                })
 
-    # At the current stage, resources such as
-    # water, fertilizer and fuel are consumable
-    # but their quantities are not specified
-    # inside contracts.
-    #
-    # Therefore we do NOT reject tasks merely
-    # because they share a resource.
-    #
-    # Quantity-based resource conflicts will
-    # be added later when contracts contain
-    # resource quantities.
+            # Duplicate operation: same task, crop and field.
+            if (
+                current_field
+                and current_field == previous_field
+                and current_field in farm_state["fields"]
+                and current_task == previous_task
+                and current_crop == previous_crop
+            ):
+                task_conflicts.append({
+                    "type": "duplicate_task",
+                    "tasks": [previous_id, task_id],
+                    "field": current_field,
+                    "message": (
+                        f"{task_id} duplicates task {previous_id}: "
+                        f"the same operation for the same crop "
+                        f"and field was already approved."
+                    )
+                })
 
+        if task_conflicts:
+            task_statuses[task_id] = "BLOCKED"
 
-# ------------------------------------------------
-# VERIFY MULTIPLE CONTRACTS
-# ------------------------------------------------
+            for conflict in task_conflicts:
+                conflicts.append(conflict)
+                conflict_reasons[task_id].append(
+                    conflict["message"]
+                )
 
-def verify_multi_agent_contracts(
-    contracts
-):
+            blocked_contracts.append(contract)
+        else:
+            approved_contracts.append(contract)
 
-    conflicts = []
+    task_results = []
+    approved_tasks = []
+    blocked_tasks = []
 
-    if not contracts:
+    for contract in contracts:
+        task_id = contract.get("task_id", "UNKNOWN")
 
-        return {
-            "verified": True,
-            "status": "APPROVED",
-            "conflicts": []
+        task_result = {
+            "task_id": task_id,
+            "task": contract.get("task", "UNKNOWN"),
+            "field": normalize_field_name(
+                contract.get("field")
+            ),
+            "agent": contract.get("agent", "UNKNOWN"),
+            "machine": contract.get("machine", "UNKNOWN"),
+            "status": task_statuses[task_id],
+            "conflict_reasons": conflict_reasons[task_id]
         }
 
-    check_agent_conflicts(
-        contracts,
-        conflicts
-    )
+        task_results.append(task_result)
 
-    check_machine_conflicts(
-        contracts,
-        conflicts
-    )
+        if task_result["status"] == "BLOCKED":
+            blocked_tasks.append(task_result)
+        else:
+            approved_tasks.append(task_result)
 
-    check_field_conflicts(
-        contracts,
-        conflicts
-    )
-
-    check_resource_conflicts(
-        contracts,
-        conflicts
-    )
-
-    if len(conflicts) == 0:
-
-        return {
-            "verified": True,
-            "status": "APPROVED",
-            "conflicts": []
-        }
+    if not conflicts:
+        overall_status = "APPROVED"
+    elif approved_tasks:
+        overall_status = "PARTIALLY_APPROVED"
+    else:
+        overall_status = "REJECTED"
 
     return {
-        "verified": False,
-        "status": "REJECTED",
-        "conflicts": conflicts
+        "verified": len(conflicts) == 0,
+        "status": overall_status,
+        "tasks": task_results,
+        "approved_tasks": approved_tasks,
+        "blocked_tasks": blocked_tasks,
+        "conflicts": conflicts,
+        "approved_count": len(approved_tasks),
+        "blocked_count": len(blocked_tasks)
     }
 
 
-# ------------------------------------------------
-# PRINT RESULT
-# ------------------------------------------------
-def print_multi_agent_result(
-    result
-):
+def print_multi_agent_result(result):
+    print("\n" + "=" * 50)
+    print("MULTI-AGENT CONTRACT VERIFICATION")
+    print("=" * 50)
 
-    print(
-        "\n" + "=" * 50
-    )
+    print(f"\nOverall Status: {result['status']}")
+    print(f"Approved tasks: {result.get('approved_count', 0)}")
+    print(f"Blocked tasks: {result.get('blocked_count', 0)}")
 
-    print(
-        "MULTI-AGENT CONTRACT VERIFICATION"
-    )
+    for task in result.get("tasks", []):
+        print(f"\nTask ID: {task['task_id']}")
+        print(f"Task: {task['task']}")
+        print(f"Status: {task['status']}")
 
-    print(
-        "=" * 50
-    )
+        for reason in task.get("conflict_reasons", []):
+            print(f"Reason: {reason}")
 
-    if result["verified"]:
-
-        print(
-            "\nMULTI-AGENT CONTRACTS VERIFIED"
-        )
-
-        print(
-            "\nStatus: APPROVED"
-        )
-
-        print(
-            "\nNo conflicts detected between "
-            "the task contracts."
-        )
-
-    else:
-
-        print(
-            "\nMULTI-AGENT CONTRACT CONFLICT"
-        )
-
-        print(
-            f"\nStatus: {result['status']}"
-        )
-
-        print(
-            f"\nTotal conflicts detected: "
-            f"{len(result['conflicts'])}"
-        )
-
-        print(
-            "\nConflict details:"
-        )
+    if result.get("conflicts"):
+        print("\nDetected conflicts:")
 
         for conflict in result["conflicts"]:
-
             print(
-                "\n----------------------------------------"
-            )
-
-            print(
-                f"Conflict type: "
-                f"{conflict['type']}"
-            )
-
-            print(
-                f"Tasks involved: "
-                f"{', '.join(conflict['tasks'])}"
-            )
-
-            if "field" in conflict:
-
-                print(
-                    f"Field: "
-                    f"{conflict['field']}"
-                )
-
-            print(
-                f"Reason: "
+                f"- {conflict['type']}: "
                 f"{conflict['message']}"
             )
+    else:
+        print("\nNo conflicts detected.")
 
-        print(
-            "\nExecution BLOCKED."
-        )
+    print("\n" + "=" * 50)
 
-        print(
-            "No queued task will be executed."
-        )
-
-    print(
-        "\n" + "=" * 50
-    )
-
-# ------------------------------------------------
-# TEST
-# ------------------------------------------------
 
 if __name__ == "__main__":
-
     test_contracts = [
-
         {
             "task_id": "TASK-001",
-            "agent": "Harvesting Agent",
-            "machine": "Combine harvester",
-            "task": "Harvest a mature crop",
-            "crop": "wheat",
-            "field": "Field A",
-            "preconditions": [],
-            "required_resources": [
-                "fuel"
-            ],
-            "constraints": [],
-            "expected_outcome":
-                "Successful harvest"
+            "agent": "Irrigation Agent",
+            "machine": "Irrigation pump/system",
+            "task": "Irrigate a field",
+            "crop": "tomato",
+            "field": "Field B"
         },
-
         {
             "task_id": "TASK-002",
             "agent": "Harvesting Agent",
             "machine": "Combine harvester",
             "task": "Harvest a mature crop",
-            "crop": "tomato",
-            "field": "Field B",
-            "preconditions": [],
-            "required_resources": [
-                "fuel"
-            ],
-            "constraints": [],
-            "expected_outcome":
-                "Successful harvest"
+            "crop": "wheat",
+            "field": "Field A"
+        },
+        {
+            "task_id": "TASK-003",
+            "agent": "Harvesting Agent",
+            "machine": "Combine harvester",
+            "task": "Harvest a mature crop",
+            "crop": "wheat",
+            "field": "Field A"
+        },
+        {
+            "task_id": "TASK-004",
+            "agent": "Fertilizer Application Agent",
+            "machine": "Tractor with fertilizer spreader",
+            "task": "Apply fertilizer",
+            "crop": "rice",
+            "field": "Field C"
         }
     ]
 
-    result = verify_multi_agent_contracts(
-        test_contracts
-    )
-
-    print_multi_agent_result(
-        result
-    )
+    result = verify_multi_agent_contracts(test_contracts)
+    print_multi_agent_result(result)

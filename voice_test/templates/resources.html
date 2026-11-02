@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Farm Resource Management</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+
+    <div class="resource-page">
+        <header class="resource-page-header">
+            <div>
+                <h1>Farm Resource Management</h1>
+                <p>Manage and restock farm resources.</p>
+            </div>
+
+            <a href="{{ url_for('dashboard') }}" class="btn btn-secondary">
+                Back to Dashboard
+            </a>
+        </header>
+
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="resource-message {{ category }}">
+                        {{ message }}
+                    </div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+
+        <section class="resource-section">
+            <h2>Current Resources</h2>
+
+            <div class="resource-cards">
+                {% for name, details in resources.items() %}
+                    <div class="resource-card">
+                        <h3>{{ name|title }}</h3>
+                        <p class="resource-quantity">
+                            {{ details.quantity|round(2) }} {{ details.unit }}
+                        </p>
+                    </div>
+                {% endfor %}
+            </div>
+        </section>
+
+        <section class="resource-section">
+            <h2>Restock Resources</h2>
+            <p>Enter the quantity you want to add to the farm inventory.</p>
+
+            <form action="{{ url_for('add_resource_route') }}"
+                  method="POST"
+                  class="resource-form">
+
+                <div class="form-group">
+                    <label for="resource">Select Resource</label>
+                    <select id="resource" name="resource" required>
+                        <option value="fertilizer">Fertilizer (kg)</option>
+                        <option value="water">Water (L)</option>
+                        <option value="fuel">Fuel (L)</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="quantity">Quantity to Add</label>
+                    <input
+                        type="number"
+                        id="quantity"
+                        name="quantity"
+                        min="0.01"
+                        step="any"
+                        placeholder="Enter quantity"
+                        required
+                    >
+                </div>
+
+                <button type="submit" class="btn btn-primary">
+                    Restock Resource
+                </button>
+            </form>
+        </section>
+
+        <section class="resource-section">
+            <h2>Restocking History</h2>
+
+            {% if history %}
+                <div class="resource-table-wrapper">
+                    <table class="resource-table">
+                        <thead>
+                            <tr>
+                                <th>Resource</th>
+                                <th>Quantity Added</th>
+                                <th>Date and Time</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for entry in history %}
+                                <tr>
+                                    <td>{{ entry.resource_name|title }}</td>
+                                    <td>
+                                        {{ entry.quantity_added|round(2) }}
+                                        {{ entry.unit }}
+                                    </td>
+                                    <td>{{ entry.updated_at }}</td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            {% else %}
+                <p>No restocking records yet.</p>
+            {% endif %}
+        </section>
+    </div>
+
+</body>
+</html>

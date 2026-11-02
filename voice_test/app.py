@@ -18,9 +18,41 @@ from web_controller import (
     check_contract
 )
 
+from task_executor import execute_task
+from execution_monitor import monitor_execution
+from execution_recovery import recover_from_violation
+
+
+from resource_database import (
+    initialize_database,
+    get_resources,
+    add_resource,
+    get_resource_history,
+    set_resource_quantity
+)
+
+
+def initialize_resource_state():
+    """Load saved resource quantities into the farm state."""
+    initialize_database()
+
+    saved_resources = get_resources()
+
+    for name, details in saved_resources.items():
+        farm_state["resources"][name] = details["quantity"]
+
+
+initialize_resource_state()
+
 
 app = Flask(__name__)
 
+app.secret_key = "smart-agriculture-demo-secret-key"
+
+def add_workflow_activity(message):
+    """Store workflow events for the dashboard."""
+    dashboard_state.setdefault("workflow_activity", [])
+    dashboard_state["workflow_activity"].append(message)
 
 # ============================================================
 # VOICE RECOGNITION WORKFLOW
@@ -236,6 +268,49 @@ def dashboard():
     )
 
 
+@app.route("/resources")
+def resources_page():
+    resources = get_resources()
+    history = get_resource_history()
+
+    return render_template(
+        "resources.html",
+        resources=resources,
+        history=history
+    )
+
+
+@app.route("/add_resource", methods=["POST"])
+def add_resource_route():
+    from flask import request, redirect, url_for, flash
+
+    try:
+        resource_name = request.form.get("resource", "").strip().lower()
+        quantity_text = request.form.get("quantity", "").strip()
+
+        if not quantity_text:
+            raise ValueError("Please enter a quantity.")
+
+        quantity = float(quantity_text)
+
+        if not quantity > 0:
+            raise ValueError("Quantity must be greater than zero.")
+
+        add_resource(resource_name, quantity)
+
+        # Refresh the in-memory farm state from SQLite
+        saved_resources = get_resources()
+
+        for name, details in saved_resources.items():
+            farm_state["resources"][name] = details["quantity"]
+
+        flash("Resource restocked successfully.", "success")
+
+    except (ValueError, TypeError) as error:
+        flash(str(error), "error")
+
+    return redirect(url_for("resources_page"))
+
 # ============================================================
 # START VOICE
 # ============================================================
@@ -297,6 +372,12 @@ def start_voice():
 
     dashboard_state["multi_agent_result"] = None  
 
+    dashboard_state["execution_results"] = []
+    dashboard_state["monitoring_results"] = []
+    dashboard_state["recovery_results"] = []
+    dashboard_state["workflow_activity"] = []
+    dashboard_state["retry_monitoring_results"] = []
+
     dashboard_state["needs_selection"] = False
 
     dashboard_state["suggested_command"] = None
@@ -308,6 +389,8 @@ def start_voice():
     dashboard_state["completed_steps"] = []
 
     dashboard_state["workflow_running"] = True
+
+    dashboard_state["task_added"] = False
 
     thread = Thread(
         target=run_voice_workflow,
@@ -409,6 +492,12 @@ def check_contract_route():
                 "There is no contract waiting for review."
 
         })
+
+    if dashboard_state.get("workflow_running", False):
+        return jsonify({
+            "success": False,
+            "message": "A workflow is already running."
+        }), 409
 
     dashboard_state["workflow_running"] = True
 
@@ -669,141 +758,266 @@ def finish_tasks():
             get_task_count()
     })
 
+
+
 def run_multi_agent_verification():
-
     try:
-
-        print("\n")
-        print("=" * 60)
-        print("DEBUG: MULTI-AGENT VERIFICATION")
-        print("=" * 60)
-
-        queued_tasks = get_tasks()
-
-        print(
-            "Number of tasks sent to verifier:",
-            len(queued_tasks)
-        )
-
-        for task in queued_tasks:
-
-            print("\nTask ID:", task.get("task_id"))
-            print("Agent:", task.get("agent"))
-            print("Machine:", task.get("machine"))
-            print("Task:", task.get("task"))
-            print("Crop:", task.get("crop"))
-            print("Field:", task.get("field"))
-
-        print("\nRunning verifier...")
-
         result = verify_queued_tasks()
 
-        print("\nVerifier result:")
-        print("Verified:", result.get("verified"))
-        print("Status:", result.get("status"))
-        print(
-            "Number of conflicts:",
-            len(result.get("conflicts", []))
+        dashboard_state["queue_count"] = get_task_count()
+        dashboard_state["multi_agent_result"] = result
+        dashboard_state["multi_agent_verification"] = result.get(
+            "status", "UNKNOWN"
         )
 
-        print("Conflicts:")
-
-        for conflict in result.get("conflicts", []):
-
-            print(
-                "-",
-                conflict.get("type"),
-                ":",
-                conflict.get("message")
+        # Record multi-agent verification in Completed Steps
+        if "Multi-agent verification completed" not in dashboard_state["completed_steps"]:
+            dashboard_state["completed_steps"].append(
+                "Multi-agent verification completed"
             )
 
-        print("=" * 60)
-        print()
+        status = result.get("status", "UNKNOWN")
 
-        dashboard_state["queue_count"] = (
-            get_task_count()
-        )
-
-        dashboard_state["multi_agent_result"] = (
-            result
-        )
-
-        if result["verified"]:
-
-            dashboard_state[
-                "multi_agent_verification"
-            ] = "APPROVED"
-
-            dashboard_state["current_stage"] = (
-                "Multi-Agent Verification Approved"
-            )
-
-            dashboard_state["current_output"] = (
-                result
-            )
-
-            if (
-                "Multi-agent contracts verified"
-                not in dashboard_state[
-                    "completed_steps"
-                ]
-            ):
-
-                dashboard_state[
-                    "completed_steps"
-                ].append(
-                    "Multi-agent contracts verified"
-                )
-
+        if status == "APPROVED":
+            message = "All queued tasks passed multi-agent verification."
+        elif status == "PARTIALLY_APPROVED":
+            message = "Some tasks passed verification. Blocked tasks will not execute."
         else:
+            message = "The queued tasks failed multi-agent verification."
 
-            dashboard_state[
-                "multi_agent_verification"
-            ] = "REJECTED"
-
-            dashboard_state["current_stage"] = (
-                "Multi-Agent Conflict Detected"
-            )
-
-            dashboard_state["current_output"] = (
-                result
-            )
-
-            if (
-                "Multi-agent conflict detected"
-                not in dashboard_state[
-                    "completed_steps"
-                ]
-            ):
-
-                dashboard_state[
-                    "completed_steps"
-                ].append(
-                    "Multi-agent conflict detected"
-                )
-
-    except Exception as e:
-
-        print("\nMULTI-AGENT VERIFICATION ERROR:")
-        print(str(e))
-
-        dashboard_state[
-            "multi_agent_verification"
-        ] = "ERROR"
-
-        dashboard_state["current_stage"] = (
-            "Multi-Agent Verification Error"
-        )
-
+        dashboard_state["current_stage"] = "Multi-Agent Verification Complete"
         dashboard_state["current_output"] = {
-            "error": str(e)
+            "message": message,
+            "multi_agent_result": result
         }
 
-    finally:
+        add_workflow_activity(
+            f"Multi-agent verification completed: {status}"
+        )
 
-        dashboard_state[
-            "workflow_running"
-        ] = False
+    except Exception as error:
+        dashboard_state["multi_agent_verification"] = "ERROR"
+        dashboard_state["current_stage"] = "Verification Error"
+        dashboard_state["current_output"] = {
+            "message": f"Multi-agent verification failed: {str(error)}"
+        }
+
+        add_workflow_activity(
+            f"Multi-agent verification error: {str(error)}"
+        )
+
+    finally:
+        dashboard_state["workflow_running"] = False
+
+
+@app.route("/execute_tasks", methods=["POST"])
+def execute_tasks():
+    if dashboard_state.get("workflow_running"):
+        return jsonify({
+            "success": False,
+            "message": "Another workflow is currently running."
+        }), 409
+
+    verification_result = dashboard_state.get("multi_agent_result")
+
+    if not verification_result:
+        return jsonify({
+            "success": False,
+            "message": "Verify the queued tasks before execution."
+        }), 400
+
+    status = verification_result.get("status")
+
+    if status not in ["APPROVED", "PARTIALLY_APPROVED"]:
+        return jsonify({
+            "success": False,
+            "message": "No tasks are approved for execution."
+        }), 400
+
+    dashboard_state["workflow_running"] = True
+
+    if dashboard_state.get("execution") == "Completed":
+        return jsonify({
+            "success": False,
+            "message": "These tasks have already been executed."
+        }), 409
+    dashboard_state["execution_results"] = []
+    dashboard_state["monitoring_results"] = []
+    dashboard_state["recovery_results"] = []
+    dashboard_state["retry_monitoring_results"] = []
+
+    try:
+        for contract in get_tasks():
+            task_id = contract.get("task_id", "UNKNOWN")
+            task_status = contract.get("multi_agent_status", "Pending")
+
+            # Never execute tasks that are blocked or still pending.
+            if task_status != "APPROVED":
+                dashboard_state["execution_results"].append({
+                    "task_id": task_id,
+                    "task": contract.get("task", "UNKNOWN"),
+                    "success": False,
+                    "skipped": True,
+                    "failure_type": "multi_agent_conflict",
+                    "message": "Task skipped because it was not approved."
+                })
+
+                add_workflow_activity(
+                    f"Task {task_id} skipped: not approved."
+                )
+                continue
+
+            try:
+                # Execute the approved task.
+                execution_result = execute_task(contract)
+                # Save resource usage to the SQLite database.
+                for resource_name, quantity in farm_state["resources"].items():
+                    set_resource_quantity(resource_name, quantity)
+
+                execution_result["task_id"] = task_id
+
+                dashboard_state["execution_results"].append(
+                    execution_result
+                )
+
+                add_workflow_activity(
+                    f"Task {task_id}: execution "
+                    f"{'successful' if execution_result.get('success') else 'failed'}."
+                )
+
+                # Monitor the result.
+                monitoring_result = monitor_execution(
+                    contract, execution_result
+                )
+                monitoring_result["task_id"] = task_id
+
+                dashboard_state["monitoring_results"].append(
+                    monitoring_result
+                )
+
+                if not monitoring_result.get("violation_detected"):
+                    add_workflow_activity(
+                        f"Task {task_id}: monitoring completed without violations."
+                    )
+                    continue
+
+                add_workflow_activity(
+                    f"Task {task_id}: monitoring detected a violation."
+                )
+
+                # Ask the recovery module what action to take.
+                recovery_result = recover_from_violation(
+                    contract,
+                    execution_result,
+                    monitoring_result
+                )
+                recovery_result["task_id"] = task_id
+
+                dashboard_state["recovery_results"].append(
+                    recovery_result
+                )
+
+                add_workflow_activity(
+                    f"Task {task_id}: recovery action "
+                    f"{recovery_result.get('action', 'unknown')} selected."
+                )
+
+                # Retry only when the recovery module requests it.
+                if recovery_result.get("action") == "retry":
+                    retry_result = execute_task(contract)
+                    # Save resource usage after retry execution.
+                    for resource_name, quantity in farm_state["resources"].items():
+                        set_resource_quantity(resource_name, quantity)
+                    retry_result["task_id"] = task_id
+                    retry_result["is_retry"] = True
+
+                    dashboard_state["execution_results"].append(
+                        retry_result
+                    )
+
+                    retry_monitoring = monitor_execution(
+                        contract, retry_result
+                    )
+                    retry_monitoring["task_id"] = task_id
+
+                    dashboard_state["retry_monitoring_results"].append(
+                        retry_monitoring
+                    )
+
+                    retry_succeeded = (
+                        retry_result.get("success", False)
+                        and not retry_monitoring.get("violation_detected", False)
+                    )
+
+                    recovery_result["retry_succeeded"] = retry_succeeded
+
+                    add_workflow_activity(
+                        f"Task {task_id}: retry "
+                        f"{'succeeded' if retry_succeeded else 'did not resolve the issue'}."
+                    )
+
+            except Exception as error:
+                dashboard_state["execution_results"].append({
+                    "task_id": task_id,
+                    "task": contract.get("task", "UNKNOWN"),
+                    "success": False,
+                    "skipped": False,
+                    "failure_type": "execution_error",
+                    "message": str(error)
+                })
+
+                add_workflow_activity(
+                    f"Task {task_id}: execution error — {str(error)}"
+                )
+
+        
+        # Mark execution and monitoring as completed
+        dashboard_state["execution"] = "Completed"
+        dashboard_state["monitoring"] = "Completed"
+
+        # Update the Completed Steps checklist
+        if "Task execution completed" not in dashboard_state["completed_steps"]:
+            dashboard_state["completed_steps"].append(
+                "Task execution completed"
+            )
+
+        if "Execution monitoring completed" not in dashboard_state["completed_steps"]:
+            dashboard_state["completed_steps"].append(
+                "Execution monitoring completed"
+                )
+
+        dashboard_state["current_stage"] = "Task Execution Complete"
+        dashboard_state["current_output"] = {
+            "message": "Execution and monitoring finished. Review the results below."
+        }
+        dashboard_state["current_output"] = {
+            "message": "Execution and monitoring finished. Review the results below."
+        }
+
+        return jsonify({
+            "success": True,
+            "message": "Task execution and monitoring finished."
+        })
+
+    except Exception as error:
+        dashboard_state["execution"] = "Failed"
+        dashboard_state["current_stage"] = "Execution Error"
+        dashboard_state["current_output"] = {
+            "message": f"Execution workflow failed: {str(error)}"
+        }
+
+        add_workflow_activity(
+            f"Execution workflow error: {str(error)}"
+        )
+
+        return jsonify({
+            "success": False,
+            "message": "The execution workflow failed."
+        }), 500
+
+    finally:
+        dashboard_state["workflow_running"] = False
+
 
 # ============================================================
 # WORKFLOW STATUS
@@ -811,11 +1025,32 @@ def run_multi_agent_verification():
 
 @app.route("/workflow_status")
 def workflow_status():
+    dashboard_state["queue_count"] = get_task_count()
 
-    return jsonify(
-        dashboard_state
-    )
+    dashboard_state["queued_tasks"] = [
+        {
+            "task_id": task.get("task_id", "UNKNOWN"),
+            "task": task.get("task", "UNKNOWN"),
+            "agent": task.get("agent", "UNKNOWN"),
+            "machine": task.get("machine", "UNKNOWN"),
+            "crop": task.get("crop", "UNKNOWN"),
+            "field": task.get("field", "UNKNOWN"),
+            "verification": task.get("verification", "Not verified"),
+            "multi_agent_status": task.get(
+                "multi_agent_status", "Pending"
+            ),
+            "conflict_reasons": task.get("conflict_reasons", [])
+        }
+        for task in get_tasks()
+    ]
 
+    dashboard_state.setdefault("execution_results", [])
+    dashboard_state.setdefault("monitoring_results", [])
+    dashboard_state.setdefault("recovery_results", [])
+    dashboard_state.setdefault("workflow_activity", [])
+    dashboard_state.setdefault("retry_monitoring_results", [])
+
+    return jsonify(dashboard_state)
 
 # ============================================================
 # SELECT COMMAND
@@ -951,6 +1186,7 @@ def select_command():
     # ========================================================
 
     return redirect("/")
+
 
 # ============================================================
 # RUN APPLICATION

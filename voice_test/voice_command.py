@@ -438,18 +438,56 @@ while True:
                     multi_agent_result
                 )
 
+
                 # ------------------------------------------------
                 # EXECUTE QUEUED TASKS
                 # ------------------------------------------------
 
-                if multi_agent_result["verified"]:
+                if multi_agent_result["status"] in (
+                    "APPROVED",
+                    "PARTIALLY_APPROVED"
+                ):
 
-                    print(
-                        "\nAll queued tasks are approved "
-                        "for execution."
-                    )
+                    if multi_agent_result["status"] == "APPROVED":
+
+                        print(
+                            "\nAll queued tasks are approved "
+                            "for execution."
+                        )
+
+                    else:
+
+                        print(
+                            "\nSome tasks are blocked due to conflicts."
+                        )
+
+                        print(
+                            "Only approved tasks will be executed."
+                        )
+
+                    task_statuses = {
+                        task["task_id"]: task["status"]
+                        for task in multi_agent_result.get("tasks", [])
+                    }
 
                     for contract in get_tasks():
+
+                        task_id = contract.get("task_id", "UNKNOWN")
+
+                        status = task_statuses.get(
+                            task_id,
+                            "BLOCKED"
+                        )
+
+                        if status == "BLOCKED":
+
+                            print(
+                                f"\nSkipping {task_id}: "
+                                "blocked due to multi-agent conflicts."
+                            )
+
+                            continue
+                
 
                         print(
                             "\n" + "=" * 50
@@ -634,7 +672,7 @@ while True:
                 else:
 
                     print(
-                        "\nQueued tasks were rejected "
+                        "\nAll queued tasks are blocked "
                         "due to multi-agent conflicts."
                     )
 

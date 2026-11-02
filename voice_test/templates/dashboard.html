@@ -1,2703 +1,832 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 
 <head>
-
-    <title>Smart Agriculture</title>
-
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Smart Agriculture | Operations Dashboard</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
-
 </head>
 
-
 <body>
-
     <div class="container">
 
+        <header class="app-header">
+            <div class="brand">
+                <div class="brand-icon">A</div>
+                <div>
+                    <h1>Smart Agriculture</h1>
+                    <p>Voice-enabled multi-agent operations</p>
+                </div>
+            </div>
+            <a href="{{ url_for('resources_page') }}" class="btn btn-secondary">
+                Manage Resources
+            </a>
 
-        <!-- ================================================= -->
-        <!-- HEADER -->
-        <!-- ================================================= -->
-
-        <header>
-
-            <h1>Smart Agriculture</h1>
-
-            <p>
-                Voice-Enabled Multi-Agent Framework
-            </p>
-
+            <div class="header-status">
+                <span class="status-dot"></span>
+                <span id="systemStatus">System ready</span>
+                <span class="farm-label">Demo Farm</span>
+            </div>
         </header>
 
-
-        <!-- ================================================= -->
         <!-- FARM OVERVIEW -->
-        <!-- ================================================= -->
-
-        <section>
-
-            <h2>Farm Overview</h2>
-
-            <div class="fields">
-
-                {% for field_name, field in farm["fields"].items() %}
-
-                <div class="card">
-
-                    <h3>{{ field_name }}</h3>
-
-                    <p>
-                        Crop:
-                        <strong>{{ field["crop"] }}</strong>
-                    </p>
-
-                    <p>
-                        Soil Moisture:
-                        <strong>{{ field["soil_moisture"] }}%</strong>
-                    </p>
-
-                    <p>
-                        Crop Maturity:
-                        <strong>{{ field["crop_maturity"] }}%</strong>
-                    </p>
-
-                    <p>
-                        Status:
-                        <strong>{{ field["status"] }}</strong>
-                    </p>
-
-                </div>
-
-                {% endfor %}
-
-            </div>
-
-        </section>
-
-
-        <!-- ================================================= -->
-        <!-- AVAILABLE AGENTS -->
-        <!-- ================================================= -->
-
-        <section>
-
-            <h2>Available Agents</h2>
-
-            {% for agent_name, agent in farm["agents"].items() %}
-
-            <div class="agent">
-
+        <section class="overview-section">
+            <div class="section-heading">
                 <div>
-
-                    <strong>
-                        {{ agent_name }}
-                    </strong>
-
+                    <span class="eyebrow">FARM MONITORING</span>
+                    <h2>Farm Overview</h2>
                 </div>
-
-                <div class="agent-details">
-
-                    Machine:
-                    {{ agent["machine"] }}
-
-                    <br>
-
-                    Status:
-                    {{ agent["status"] }}
-
-                </div>
-
+                <span class="subtle-text">Field conditions and available resources</span>
             </div>
 
-            {% endfor %}
-
-        </section>
-
-
-        <!-- ================================================= -->
-        <!-- FARM RESOURCES -->
-        <!-- ================================================= -->
-
-        <section>
-
-            <h2>Farm Resources</h2>
-
-            <div class="resources">
-
-
-                <div class="card resource">
-
-                    <div class="resource-icon">
+            <div class="fields overview-fields">
+                {% for field_name, field in farm["fields"].items() %}
+                <article class="field-card">
+                    <div class="card-topline">
+                        <h3>{{ field_name }}</h3>
+                        <span class="status-pill">{{ field["status"] }}</span>
                     </div>
-
-                    <strong>Water</strong>
-
-                    <p>
-                        {{ farm["resources"]["water"] }} L
-                    </p>
-
-                </div>
-
-
-                <div class="card resource">
-
-                    <div class="resource-icon">
+                    <p class="crop-name">{{ field["crop"] }}</p>
+                    <div class="field-metric">
+                        <span>Soil moisture</span>
+                        <strong>{{ field["soil_moisture"] }}%</strong>
                     </div>
-
-                    <strong>Fuel</strong>
-
-                    <p>
-                        {{ farm["resources"]["fuel"] }} L
-                    </p>
-
-                </div>
-
-
-                <div class="card resource">
-
-                    <div class="resource-icon">
+                    <div class="meter">
+                        <div class="meter">
+                            <span class="moisture-bar" style="--bar-width: {{ field['soil_moisture'] }}%"></span>
+                        </div>
                     </div>
-
-                    <strong>Fertilizer</strong>
-
-                    <p>
-                        {{ farm["resources"]["fertilizer"] }} kg
-                    </p>
-
-                </div>
-
-
+                    <div class="field-metric maturity-metric">
+                        <span>Crop maturity</span>
+                        <strong>{{ field["crop_maturity"] }}%</strong>
+                    </div>
+                    <div class="meter maturity-meter">
+                        <div class="meter maturity-meter">
+                            <span class="maturity-bar" style="--bar-width: {{ field['crop_maturity'] }}%"></span>
+                        </div>
+                    </div>
+                </article>
+                {% endfor %}
             </div>
 
+            <div class="overview-bottom">
+                <div class="overview-subpanel">
+                    <div class="section-heading compact-heading">
+                        <h3>Available Agents</h3>
+                        <span class="subtle-text">3 task agents</span>
+                    </div>
+                    <div class="agent-list">
+                        {% for agent_name, agent in farm["agents"].items() %}
+                        <div class="agent-row">
+                            <div class="agent-symbol">{{ loop.index }}</div>
+                            <div class="agent-copy">
+                                <strong>{{ agent_name }}</strong>
+                                <span>{{ agent["machine"] }}</span>
+                            </div>
+                            <span class="status-pill">{{ agent["status"] }}</span>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+
+                <div class="overview-subpanel">
+                    <div class="section-heading compact-heading">
+                        <h3>Farm Resources</h3>
+                        <span class="subtle-text">Current availability</span>
+                    </div>
+                    <div class="resource-grid">
+                        <div class="resource-card">
+                            <span class="resource-symbol">W</span>
+                            <span class="resource-name">Water</span>
+                            <strong id="resourceWater">{{ farm["resources"]["water"] }} L</strong>
+                        </div>
+                        <div class="resource-card">
+                            <span class="resource-symbol">F</span>
+                            <span class="resource-name">Fuel</span>
+                            <strong id="resourceFuel">{{ farm["resources"]["fuel"] }} L</strong>
+                        </div>
+                        <div class="resource-card">
+                            <span class="resource-symbol">R</span>
+                            <span class="resource-name">Fertilizer</span>
+                            <strong id="resourceFertilizer">{{ farm["resources"]["fertilizer"] }} kg</strong>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </section>
 
-
-        <!-- ================================================= -->
         <!-- VOICE COMMAND -->
-        <!-- ================================================= -->
-
         <section class="voice-section">
-
-            <h2>Voice Command</h2>
-
-            <p>
-                Give an agricultural command using your voice.
-            </p>
-
-
-            <div class="example">
-
-                Example:
-
-                <strong>
-                    "Harvest the wheat in Field A"
-                </strong>
-
+            <div class="section-heading">
+                <div>
+                    <span class="eyebrow">COMMAND CENTRE</span>
+                    <h2>Voice Command</h2>
+                    <p class="subtle-text">Describe an agricultural task to begin the workflow.</p>
+                </div>
+                <span class="status-pill" id="voiceReadyBadge">Ready for input</span>
             </div>
 
+            <div class="voice-workspace">
+                <div class="voice-main">
+                    <div class="example-command">
+                        <span class="eyebrow">TRY A COMMAND</span>
+                        <p>“Harvest the wheat in Field A”</p>
+                    </div>
+                    <div class="voice-actions">
+                        <button id="voiceButton" class="btn btn-primary" type="button">
+                            <span class="button-icon">●</span> Start Voice Command
+                        </button>
+                        <span id="voiceStatus" class="subtle-text" aria-live="polite">
+                            Ready for voice command.
+                        </span>
+                    </div>
+                    <div id="commandHeard" class="recognized-command hidden">
+                        <span class="eyebrow">COMMAND HEARD</span>
+                        <p id="heardCommand">No command yet</p>
+                    </div>
 
-            <!-- COMMAND HEARD -->
+                    <div id="continueProcessing" class="action-box hidden">
+                        <h3>Command recognized</h3>
+                        <p>Continue to generate the task contract.</p>
+                        <button type="button" class="btn btn-primary" onclick="continueProcessing()">
+                            Continue Processing
+                        </button>
+                    </div>
 
-            <div id="commandHeard" class="command-heard" {% if state["command"]=="No command yet" %}
-                style="display: none;" {% endif %}>
-
-                <strong>
-                    Command heard:
-                </strong>
-
-                <div id="heardCommand" class="heard-command">
-
-                    {% if state["command"] != "No command yet" %}
-
-                    "{{ state["command"] }}"
-
-                    {% endif %}
-
+                    <div id="commandSelection" class="action-box hidden">
+                        <h3>Confirm the intended task</h3>
+                        <p>The command was not identified confidently. Choose the task you intended.</p>
+                        <form action="/select_command" method="POST" class="selection-actions">
+                            <button type="submit" name="command" value="harvest" class="btn btn-secondary">Harvest
+                                crop</button>
+                            <button type="submit" name="command" value="irrigate" class="btn btn-secondary">Irrigate
+                                field</button>
+                            <button type="submit" name="command" value="fertilizer" class="btn btn-secondary">Apply
+                                fertilizer</button>
+                        </form>
+                        <button type="button" class="btn btn-quiet" onclick="startVoiceAgain()">Speak again</button>
+                    </div>
                 </div>
 
+                <aside class="voice-side">
+                    <span class="eyebrow">CURRENT WORKFLOW STAGE</span>
+                    <h3 id="currentStage">{{ state.get("current_stage", "Waiting for voice command") }}</h3>
+                    <p id="currentMessage" class="subtle-text">
+                        {{ (state.get("current_output") or {}).get("message", "Start a voice command to begin.") }}
+                    </p>
+                    <div class="confidence-box">
+                        <span>Recognized command</span>
+                        <strong id="recognizedTask">{{ state.get("command", "No command yet") }}</strong>
+                    </div>
+                    <div class="confidence-box">
+                        <span>Confidence score</span>
+                        <strong id="confidenceScore">—</strong>
+                    </div>
+                </aside>
             </div>
-
-
-            <button id="voiceButton" type="button">
-
-                START VOICE COMMAND
-
-            </button>
-
-
-            <div id="voiceStatus" class="voice-status">
-
-                Ready for voice command.
-
-            </div>
-
-
-            <!-- ================================================= -->
-            <!-- CONTINUE PROCESSING -->
-            <!-- ================================================= -->
-
-            <div id="continueProcessing" class="command-selection" {% if not state.get("needs_continue", False) %}
-                style="display: none;" {% endif %}>
-
-                <h3>
-                    Command recognized
-                </h3>
-
-                <p>
-                    Your command was recognized successfully.
-                    Continue processing to generate and verify
-                    the task contract.
-                </p>
-
-                <button type="button" class="selection-button" onclick="continueProcessing()">
-
-                    CONTINUE PROCESSING
-
-                </button>
-
-            </div>
-
-
-            <!-- ================================================= -->
-            <!-- COMMAND SELECTION -->
-            <!-- ================================================= -->
-
-            <div id="commandSelection" class="command-selection" {% if not state.get("needs_selection", False) %}
-                style="display: none;" {% endif %}>
-
-                <h3>
-                    Did you mean?
-                </h3>
-
-                <p>
-                    The agricultural task could not be identified
-                    confidently. Please select the intended task.
-                </p>
-
-
-                <form action="/select_command" method="POST">
-
-                    <button type="submit" name="command" value="harvest" class="selection-button">
-
-                        Harvest the crop
-
-                    </button>
-
-
-                    <button type="submit" name="command" value="irrigate" class="selection-button">
-
-                        Irrigate the field
-
-                    </button>
-
-
-                    <button type="submit" name="command" value="fertilizer" class="selection-button">
-
-                        Apply fertilizer
-
-                    </button>
-
-                </form>
-
-
-                <button type="button" class="speak-again-button" onclick="startVoiceAgain()">
-
-                    Speak again
-
-                </button>
-
-            </div>
-
-
         </section>
 
-
-        <!-- ================================================= -->
-        <!-- WORKFLOW DASHBOARD -->
-        <!-- ================================================= -->
-
-        <section>
-
-            <h2>Task Workflow</h2>
-
-
-            <div class="workflow-grid">
-
-
-                <!-- ================================================= -->
-                <!-- CURRENT TASK -->
-                <!-- ================================================= -->
-
-                <div class="workflow-panel">
-
-                    <div class="panel-header">
-
-                        <h2>Current Task</h2>
-
-                        <div id="currentStage" class="stage-badge">
-
-                            {{ state.get(
-                            "current_stage",
-                            "Waiting for voice command"
-                            ) }}
-
-                        </div>
-
-                    </div>
-
-
-                    <div id="liveOutput" class="live-output">
-
-                        <h3>
-                            Live Backend Output
-                        </h3>
-
-
-                        {% set current_output =
-                        state.get("current_output") %}
-
-
-                        {% if current_output %}
-
-
-                        <!-- ================================================= -->
-                        <!-- MESSAGE OUTPUT -->
-                        <!-- ================================================= -->
-
-                        {% if current_output.get("message") %}
-
-                        <div class="output-message">
-
-                            {{ current_output["message"] }}
-
-                        </div>
-
-                        {% endif %}
-
-
-                        <!-- ================================================= -->
-                        <!-- GENERATED CONTRACT -->
-                        <!-- ================================================= -->
-
-                        {% if current_output.get("task_id") %}
-
-                        <div class="contract-output">
-
-                            <h3>
-                                Generated Task Contract
-                            </h3>
-
-
-                            <div class="contract-row">
-
-                                <span>
-                                    Task ID
-                                </span>
-
-                                <strong>
-                                    {{ current_output.get(
-                                    "task_id",
-                                    "None"
-                                    ) }}
-                                </strong>
-
-                            </div>
-
-
-                            <div class="contract-row">
-
-                                <span>
-                                    Agent
-                                </span>
-
-                                <strong>
-                                    {{ current_output.get(
-                                    "agent",
-                                    "None"
-                                    ) }}
-                                </strong>
-
-                            </div>
-
-
-                            <div class="contract-row">
-
-                                <span>
-                                    Machine
-                                </span>
-
-                                <strong>
-                                    {{ current_output.get(
-                                    "machine",
-                                    "None"
-                                    ) }}
-                                </strong>
-
-                            </div>
-
-
-                            <div class="contract-row">
-
-                                <span>
-                                    Task
-                                </span>
-
-                                <strong>
-                                    {{ current_output.get(
-                                    "task",
-                                    "None"
-                                    ) }}
-                                </strong>
-
-                            </div>
-
-
-                            <div class="contract-row">
-
-                                <span>
-                                    Crop
-                                </span>
-
-                                <strong>
-                                    {{ current_output.get(
-                                    "crop",
-                                    "None"
-                                    ) }}
-                                </strong>
-
-                            </div>
-
-
-                            <div class="contract-row">
-
-                                <span>
-                                    Field
-                                </span>
-
-                                <strong>
-                                    {{ current_output.get(
-                                    "field",
-                                    "None"
-                                    ) }}
-                                </strong>
-
-                            </div>
-
-
-                            <div class="contract-block">
-
-                                <strong>
-                                    Preconditions
-                                </strong>
-
-                                <ul>
-
-                                    {% for item in
-                                    current_output.get(
-                                    "preconditions",
-                                    []
-                                    )
-                                    %}
-
-                                    <li>
-                                        {{ item }}
-                                    </li>
-
-                                    {% endfor %}
-
-                                </ul>
-
-                            </div>
-
-
-                            <div class="contract-block">
-
-                                <strong>
-                                    Required Resources
-                                </strong>
-
-                                <ul>
-
-                                    {% for item in
-                                    current_output.get(
-                                    "required_resources",
-                                    []
-                                    )
-                                    %}
-
-                                    <li>
-                                        {{ item }}
-                                    </li>
-
-                                    {% endfor %}
-
-                                </ul>
-
-                            </div>
-
-
-                            <div class="contract-block">
-
-                                <strong>
-                                    Constraints
-                                </strong>
-
-                                <ul>
-
-                                    {% for item in
-                                    current_output.get(
-                                    "constraints",
-                                    []
-                                    )
-                                    %}
-
-                                    <li>
-                                        {{ item }}
-                                    </li>
-
-                                    {% endfor %}
-
-                                </ul>
-
-                            </div>
-
-
-                            <div class="contract-block">
-
-                                <strong>
-                                    Expected Outcome
-                                </strong>
-
-                                <p>
-
-                                    {{ current_output.get(
-                                    "expected_outcome",
-                                    "None"
-                                    ) }}
-
-                                </p>
-
-                            </div>
-
-                        </div>
-
-
-                        <!-- CHECK CONTRACT -->
-
-                        {% if state.get(
-                        "needs_contract_check",
-                        False
-                        ) %}
-
-                        <div class="command-selection" style="margin-top: 20px;">
-
-                            <h3>
-                                Review Generated Contract
-                            </h3>
-
-                            <p>
-                                The task contract has been generated.
-                                Please check the contract before verification.
-                            </p>
-
-                            <button type="button" class="selection-button" onclick="checkContract()">
-
-                                CHECK CONTRACT
-
-                            </button>
-
-                        </div>
-
-                        {% endif %}
-
-
-                        {% endif %}
-
-
-                        <!-- ================================================= -->
-                        <!-- VERIFICATION OUTPUT -->
-                        <!-- ================================================= -->
-
-                        {% if current_output.get("verified") is not none %}
-
-                        <div class="verification-output">
-
-                            <h3>
-                                Contract Verification
-                            </h3>
-
-
-                            <div class="verification-status">
-
-                                {% if current_output["verified"] %}
-
-                                APPROVED
-
-                                {% else %}
-
-                                REJECTED
-
-                                {% endif %}
-
-                            </div>
-
-
-                            {% if current_output.get("errors") %}
-
-                            <div class="contract-block">
-
-                                <strong>
-                                    Verification Errors
-                                </strong>
-
-                                <ul>
-
-                                    {% for error in
-                                    current_output["errors"]
-                                    %}
-
-                                    <li>
-                                        {{ error }}
-                                    </li>
-
-                                    {% endfor %}
-
-                                </ul>
-
-                            </div>
-
-                            {% endif %}
-
-
-                            {% if current_output.get("preconditions") %}
-
-                            <div class="contract-block">
-
-                                <strong>
-                                    Preconditions
-                                </strong>
-
-                                <p>
-                                    {{ current_output["preconditions"] }}
-                                </p>
-
-                            </div>
-
-                            {% endif %}
-
-
-                            {% if current_output.get("constraints") %}
-
-                            <div class="contract-block">
-
-                                <strong>
-                                    Constraints
-                                </strong>
-
-                                <p>
-                                    {{ current_output["constraints"] }}
-                                </p>
-
-                            </div>
-
-                            {% endif %}
-
-                        </div>
-
-                        {% endif %}
-
-
-                        <!-- ================================================= -->
-                        <!-- GENERAL DICTIONARY OUTPUT -->
-                        <!-- ================================================= -->
-
-                        {% if current_output.get(
-                        "recognized_command"
-                        ) %}
-
-                        <div class="contract-output">
-
-                            <h3>
-                                Command Recognition
-                            </h3>
-
-
-                            <div class="contract-row">
-
-                                <span>
-                                    Command
-                                </span>
-
-                                <strong>
-
-                                    {{
-                                    current_output[
-                                    "recognized_command"
-                                    ]
-                                    }}
-
-                                </strong>
-
-                            </div>
-
-
-                            <div class="contract-row">
-
-                                <span>
-                                    Detected Task
-                                </span>
-
-                                <strong>
-
-                                    {{
-                                    current_output.get(
-                                    "detected_task",
-                                    "None"
-                                    )
-                                    }}
-
-                                </strong>
-
-                            </div>
-
-
-                            <div class="contract-row">
-
-                                <span>
-                                    Confidence Score
-                                </span>
-
-                                <strong>
-
-                                    {{
-                                    current_output.get(
-                                    "confidence_score",
-                                    "None"
-                                    )
-                                    }}
-
-                                </strong>
-
-                            </div>
-
-                        </div>
-
-                        {% endif %}
-
-
-                        {% else %}
-
-                        <div class="empty-output">
-
-                            No active backend output yet.
-
-                            <br><br>
-
-                            Start a voice command to begin
-                            the workflow.
-
-                        </div>
-
-                        {% endif %}
-
-                    </div>
-
+        <!-- WORKFLOW STAGES -->
+        <section class="workflow-section">
+            <div class="section-heading">
+                <div>
+                    <span class="eyebrow">OPERATIONS</span>
+                    <h2>Task Workflow</h2>
+                    <p class="subtle-text">Review each stage from contract generation to execution.</p>
                 </div>
+                <span class="status-pill" id="workflowBadge">Awaiting task</span>
+            </div>
 
+            <div class="workflow-stages" id="workflowStages">
+                <div class="workflow-stage" data-stage="contract">
+                    <span class="stage-number">1</span>
+                    <span>Contract</span>
+                </div>
+                <div class="stage-connector"></div>
+                <div class="workflow-stage" data-stage="verification">
+                    <span class="stage-number">2</span>
+                    <span>Verification</span>
+                </div>
+                <div class="stage-connector"></div>
+                <div class="workflow-stage" data-stage="queue">
+                    <span class="stage-number">3</span>
+                    <span>Task queue</span>
+                </div>
+                <div class="stage-connector"></div>
+                <div class="workflow-stage" data-stage="execution">
+                    <span class="stage-number">4</span>
+                    <span>Execution</span>
+                </div>
+                <div class="stage-connector"></div>
+                <div class="workflow-stage" data-stage="monitoring">
+                    <span class="stage-number">5</span>
+                    <span>Monitoring</span>
+                </div>
+            </div>
 
-                <!-- ================================================= -->
-                <!-- TASK INFORMATION -->
-                <!-- ================================================= -->
+            <div class="dashboard-grid">
 
-                <div class="workflow-panel">
-
-                    <div class="panel-header">
-
-                        <h2>
-                            Task Information
-                        </h2>
-
+                <!-- CURRENT CONTRACT -->
+                <article class="dashboard-panel">
+                    <div class="panel-heading">
+                        <div>
+                            <span class="eyebrow">CURRENT TASK</span>
+                            <h3>Task Contract</h3>
+                        </div>
+                        <span class="status-pill" id="contractBadge">Not generated</span>
                     </div>
 
-
-                    <div class="task-information">
-
-
-                        <div class="info-row">
-
-                            <span>
-                                Command
-                            </span>
-
-                            <strong id="taskCommand">
-                                {{ state["command"] }}
-                            </strong>
-
+                    <div id="contractDetails" class="contract-details">
+                        <div class="empty-state">
+                            <strong>No task contract yet</strong>
+                            <p>Start a voice command to generate a contract.</p>
                         </div>
-
-
-                        <div class="info-row">
-
-                            <span>
-                                Task ID
-                            </span>
-
-                            <strong id="taskId">
-                                {{ state["task_id"] }}
-                            </strong>
-
-                        </div>
-
-
-                        <div class="info-row">
-
-                            <span>
-                                Agent
-                            </span>
-
-                            <strong id="taskAgent">
-                                {{ state["agent"] }}
-                            </strong>
-
-                        </div>
-
-
-                        <div class="info-row">
-
-                            <span>
-                                Machine
-                            </span>
-
-                            <strong id="taskMachine">
-                                {{ state.get(
-                                "machine",
-                                "None"
-                                ) }}
-                            </strong>
-
-                        </div>
-
-
-                        <div class="info-row">
-
-                            <span>
-                                Task
-                            </span>
-
-                            <strong id="taskName">
-                                {{ state["task"] }}
-                            </strong>
-
-                        </div>
-
-
-                        <div class="info-row">
-
-                            <span>
-                                Crop
-                            </span>
-
-                            <strong id="taskCrop">
-                                {{ state.get(
-                                "crop",
-                                "None"
-                                ) }}
-                            </strong>
-
-                        </div>
-
-
-                        <div class="info-row">
-
-                            <span>
-                                Field
-                            </span>
-
-                            <strong id="taskField">
-                                {{ state["field"] }}
-                            </strong>
-
-                        </div>
-
-
-                        <div class="info-row">
-
-                            <span>
-                                Verification
-                            </span>
-
-                            <strong id="taskVerification">
-                                {{ state["verification"] }}
-                            </strong>
-
-                        </div>
-
-
-                        <div class="info-row">
-
-                            <span>
-                                Execution
-                            </span>
-
-                            <strong id="taskExecution">
-                                {{ state["execution"] }}
-                            </strong>
-
-                        </div>
-
-
-                        <div class="info-row">
-
-                            <span>
-                                Monitoring
-                            </span>
-
-                            <strong id="taskMonitoring">
-                                {{ state["monitoring"] }}
-                            </strong>
-
-                        </div>
-
-
                     </div>
 
+                    <div id="contractActions" class="panel-actions hidden">
+                        <button id="checkContractButton" type="button" class="btn btn-primary"
+                            onclick="checkContract()">
+                            Check Contract
+                        </button>
+                        <button id="addTaskButton" type="button" class="btn btn-secondary" onclick="addTask()">
+                            Add Task to Queue
+                        </button>
+                        <button id="finishTasksButton" type="button" class="btn btn-secondary" onclick="finishTasks()">
+                            Finish Tasks & Verify Queue
+                        </button>
+                    </div>
 
-                    <!-- ================================================= -->
-                    <!-- WORKFLOW PROGRESS -->
-                    <!-- ================================================= -->
+                    <div id="individualVerification" class="verification-summary">
+                        <div class="empty-state">
+                            <strong>Individual contract verification</strong>
+                            <p>The contract's own checks will appear here.</p>
+                        </div>
+                    </div>
+                </article>
 
-                    <div id="workflowProgress" class="progress-section">
+                <!-- MULTI-AGENT VERIFICATION -->
+                <article class="dashboard-panel">
+                    <div class="panel-heading">
+                        <div>
+                            <span class="eyebrow">CROSS-TASK CHECKS</span>
+                            <h3>Multi-Agent Verification</h3>
+                        </div>
+                        <span class="status-pill" id="multiAgentBadge">Not started</span>
+                    </div>
 
-                        <h3>
-                            Workflow Progress
-                        </h3>
+                    <p class="subtle-text">
+                        Checks queued contracts for conflicts. Approval here is separate from individual contract
+                        approval.
+                    </p>
 
+                    <div class="verification-counts">
+                        <div class="count-card">
+                            <span>Approved</span>
+                            <strong id="approvedCount">0</strong>
+                        </div>
+                        <div class="count-card count-blocked">
+                            <span>Blocked</span>
+                            <strong id="blockedCount">0</strong>
+                        </div>
+                    </div>
 
-                        {% if state.get("completed_steps") %}
+                    <div id="multiAgentDetails" class="result-list">
+                        <div class="empty-state">
+                            <strong>Verification pending</strong>
+                            <p>Add tasks to the queue and select Finish Tasks to check conflicts.</p>
+                        </div>
+                    </div>
 
-                        <ul class="completed-steps">
-
-                            {% for step in
-                            state["completed_steps"]
-                            %}
-
-                            <li>
-                                ✓ {{ step }}
-                            </li>
-
-                            {% endfor %}
-
-                        </ul>
-
-                        {% else %}
-
-                        <p class="no-progress">
-
-                            No workflow steps completed yet.
-
+                    <div class="panel-actions">
+                        <button id="executeTasksButton" type="button" class="btn btn-primary" onclick="executeTasks()"
+                            disabled>
+                            Execute Approved Tasks
+                        </button>
+                        <p id="executionHelp" class="subtle-text">
+                            Execution becomes available after multi-agent verification.
                         </p>
+                    </div>
+                </article>
 
-                        {% endif %}
+                <!-- QUEUE -->
+                <article class="dashboard-panel panel-wide">
+                    <div class="panel-heading">
+                        <div>
+                            <span class="eyebrow">PENDING OPERATIONS</span>
+                            <h3>Task Queue</h3>
+                        </div>
+                        <span class="status-pill" id="queueBadge">0 tasks</span>
+                    </div>
+                    <div id="queueList" class="queue-list">
+                        <div class="empty-state">
+                            <strong>The queue is empty</strong>
+                            <p>Individually approved contracts can be added here.</p>
+                        </div>
+                    </div>
+                </article>
 
+                <!-- EXECUTION AND MONITORING -->
+                <article class="dashboard-panel">
+                    <div class="panel-heading">
+                        <div>
+                            <span class="eyebrow">TASK RESULTS</span>
+                            <h3>Execution & Monitoring</h3>
+                        </div>
+                        <span class="status-pill" id="executionBadge">Not started</span>
                     </div>
 
-                </div>
+                    <div class="result-subsection">
+                        <h4>Execution results</h4>
+                        <div id="executionResults" class="result-list">
+                            <p class="subtle-text">No execution results yet.</p>
+                        </div>
+                    </div>
 
+                    <div class="result-subsection">
+                        <h4>Monitoring results</h4>
+                        <div id="monitoringResults" class="result-list">
+                            <p class="subtle-text">Monitoring has not started.</p>
+                        </div>
+                    </div>
+                </article>
 
+                <!-- RECOVERY -->
+                <article class="dashboard-panel">
+                    <div class="panel-heading">
+                        <div>
+                            <span class="eyebrow">FAULT HANDLING</span>
+                            <h3>Recovery & Retry</h3>
+                        </div>
+                        <span class="status-pill" id="recoveryBadge">No action</span>
+                    </div>
+                    <div id="recoveryResults" class="result-list">
+                        <div class="empty-state">
+                            <strong>No recovery action</strong>
+                            <p>Recovery decisions will appear if monitoring detects a violation.</p>
+                        </div>
+                    </div>
+                    <div class="result-subsection">
+                        <h4>Retry monitoring</h4>
+                        <div id="retryResults" class="result-list">
+                            <p class="subtle-text">No retry results yet.</p>
+                        </div>
+                    </div>
+                </article>
+
+                <!-- ACTIVITY -->
+                <article class="dashboard-panel panel-wide">
+                    <div class="panel-heading">
+                        <div>
+                            <span class="eyebrow">WORKFLOW HISTORY</span>
+                            <h3>Recent Activity</h3>
+                        </div>
+                    </div>
+                    <div id="activityList" class="activity-list">
+                        <p class="subtle-text">Workflow events will appear here.</p>
+                    </div>
+                </article>
+
+                <!-- PROGRESS -->
+                <article class="dashboard-panel panel-wide">
+                    <div class="panel-heading">
+                        <div>
+                            <span class="eyebrow">PROCESS CHECKLIST</span>
+                            <h3>Completed Steps</h3>
+                        </div>
+                    </div>
+                    <div id="completedSteps" class="completed-steps">
+                        <p class="subtle-text">No workflow steps completed yet.</p>
+                    </div>
+                </article>
             </div>
-
         </section>
-
-
     </div>
 
-
-    <!-- ================================================= -->
-    <!-- JAVASCRIPT -->
-    <!-- ================================================= -->
-
     <script>
+        const $ = id => document.getElementById(id);
 
-        let queueCount = 0;
-        /* ================================================= */
-        /* ELEMENTS */
-        /* ================================================= */
+        let latestState = null;
+        let pollingTimer = null;
+        let requestInProgress = false;
 
+        function escapeHtml(value) {
+            return String(value ?? "").replace(/[&<>"']/g, char => ({
+                "&": "&amp;", "<": "&lt;", ">": "&gt;",
+                '"': "&quot;", "'": "&#039;"
+            })[char]);
+        }
 
-        const voiceButton =
-            document.getElementById(
-                "voiceButton"
-            );
+        function formatStatus(value) {
+            return String(value || "Not started")
+                .replaceAll("_", " ")
+                .replaceAll("-", " ");
+        }
 
+        function badgeClass(value) {
+            const status = String(value || "").toUpperCase();
+            if (["APPROVED", "SUCCESS", "COMPLETED", "AVAILABLE"].includes(status)) return "pill-success";
+            if (["BLOCKED", "REJECTED", "FAILED", "ERROR", "ABORT"].includes(status)) return "pill-danger";
+            if (["PENDING", "PARTIALLY_APPROVED", "RETRY", "RUNNING", "IN PROGRESS"].includes(status)) return "pill-warning";
+            return "";
+        }
 
-        const voiceStatus =
-            document.getElementById(
-                "voiceStatus"
-            );
+        function pill(value) {
+            const text = formatStatus(value);
+            return `<span class="status-pill ${badgeClass(value)}">${escapeHtml(text)}</span>`;
+        }
 
-
-        const commandHeard =
-            document.getElementById(
-                "commandHeard"
-            );
-
-
-        const heardCommand =
-            document.getElementById(
-                "heardCommand"
-            );
-
-
-        const commandSelection =
-            document.getElementById(
-                "commandSelection"
-            );
-
-
-        const continueProcessingPanel =
-            document.getElementById(
-                "continueProcessing"
-            );
-
-
-        /* ================================================= */
-        /* START VOICE */
-        /* ================================================= */
-
-
-        voiceButton.addEventListener(
-            "click",
-            function () {
-
-                startVoice();
-
+        function renderRows(items) {
+            if (!Array.isArray(items) || items.length === 0) {
+                return '<li>None specified</li>';
             }
-        );
+            return items.map(item => `<li>${escapeHtml(
+                typeof item === "object" ? JSON.stringify(item) : item
+            )}</li>`).join("");
+        }
 
+        function renderKeyValue(label, value) {
+            return `<div class="detail-row"><span>${escapeHtml(label)}</span><strong>${escapeHtml(value ?? "—")}</strong></div>`;
+        }
+
+        function renderContract(state) {
+            const contract = state.contract;
+            const output = state.current_output || {};
+            const verified = state.verification;
+
+            $("contractBadge").textContent = contract
+                ? formatStatus(verified)
+                : "Not generated";
+            $("contractBadge").className = "status-pill " + badgeClass(verified);
+
+            if (!contract) {
+                $("contractDetails").innerHTML = `
+            <div class="empty-state"><strong>No task contract yet</strong>
+            <p>Start a voice command to generate a contract.</p></div>`;
+                $("contractActions").classList.add("hidden");
+                $("individualVerification").innerHTML = `
+            <div class="empty-state"><strong>Individual contract verification</strong>
+            <p>The contract's own checks will appear here.</p></div>`;
+                return;
+            }
+
+            $("contractDetails").innerHTML = `
+        <div class="contract-detail-grid">
+            ${renderKeyValue("Task ID", contract.task_id)}
+            ${renderKeyValue("Agent", contract.agent)}
+            ${renderKeyValue("Machine", contract.machine)}
+            ${renderKeyValue("Task", contract.task)}
+            ${renderKeyValue("Crop", contract.crop)}
+            ${renderKeyValue("Field", contract.field)}
+        </div>
+        <div class="contract-list-block"><h4>Preconditions</h4><ul>${renderRows(contract.preconditions)}</ul></div>
+        <div class="contract-list-block"><h4>Required resources</h4><ul>${renderRows(contract.required_resources)}</ul></div>
+        <div class="contract-list-block"><h4>Constraints</h4><ul>${renderRows(contract.constraints)}</ul></div>
+        <div class="contract-list-block"><h4>Expected outcome</h4><p>${escapeHtml(contract.expected_outcome || "—")}</p></div>`;
+
+            const needsCheck = Boolean(state.needs_contract_check);
+            const approved = verified === "APPROVED";
+            const taskAdded = Boolean(state.task_added);
+
+            $("contractActions").classList.toggle("hidden", !needsCheck && !approved);
+            $("checkContractButton").classList.toggle("hidden", !needsCheck);
+            $("addTaskButton").classList.toggle("hidden", !approved || taskAdded);
+            $("finishTasksButton").classList.toggle("hidden", !approved);
+
+            if (output.verified !== undefined && output.verified !== null) {
+                $("individualVerification").innerHTML = `
+            <div class="verification-card">
+                <div class="panel-heading"><h4>Individual contract result</h4>${pill(output.verified ? "APPROVED" : "REJECTED")}</div>
+                ${output.errors && output.errors.length
+                        ? `<ul class="error-list">${renderRows(output.errors)}</ul>`
+                        : `<p class="subtle-text">${output.verified ? "The contract passed individual verification." : "The contract did not pass individual verification."}</p>`}
+            </div>`;
+            } else {
+                $("individualVerification").innerHTML = `
+            <div class="verification-card">
+                <div class="panel-heading"><h4>Individual contract result</h4>${pill(verified)}</div>
+                <p class="subtle-text">${needsCheck ? "Review and check this contract before adding it to the queue." : "Individual verification details will appear here."}</p>
+            </div>`;
+            }
+        }
+
+        function renderMultiAgent(state) {
+            const result = state.multi_agent_result;
+            const status = state.multi_agent_verification || "Not started";
+            $("multiAgentBadge").textContent = formatStatus(status);
+            $("multiAgentBadge").className = "status-pill " + badgeClass(status);
+
+            if (!result) {
+                $("approvedCount").textContent = "0";
+                $("blockedCount").textContent = "0";
+                $("multiAgentDetails").innerHTML = `
+            <div class="empty-state"><strong>Verification pending</strong>
+            <p>Add tasks and select Finish Tasks to check for conflicts.</p></div>`;
+                $("executeTasksButton").disabled = true;
+                $("executionHelp").textContent = "Execution becomes available after multi-agent verification.";
+                return;
+            }
+
+            $("approvedCount").textContent = result.approved_count ?? (result.approved_tasks || []).length;
+            $("blockedCount").textContent = result.blocked_count ?? (result.blocked_tasks || []).length;
+
+            const taskResults = result.tasks || [];
+            const conflicts = result.conflicts || [];
+
+            let html = `<p class="subtle-text">${escapeHtml(
+                result.status === "APPROVED"
+                    ? "All queued tasks passed multi-agent verification."
+                    : result.status === "PARTIALLY_APPROVED"
+                        ? "Some tasks passed. Blocked tasks will be skipped."
+                        : "No tasks were approved for execution."
+            )}</p>`;
+
+            if (taskResults.length) {
+                html += taskResults.map(task => `
+            <div class="result-item">
+                <div class="result-item-heading">
+                    <strong>${escapeHtml(task.task || task.task_id || "Task")}</strong>
+                    ${pill(task.status)}
+                </div>
+                <p class="subtle-text">${escapeHtml(task.agent || "—")} · ${escapeHtml(task.machine || "—")} · ${escapeHtml(task.field || "—")}</p>
+                ${(task.conflict_reasons || []).length
+                        ? `<ul class="error-list">${renderRows(task.conflict_reasons)}</ul>` : ""}
+            </div>`).join("");
+            }
+
+            if (conflicts.length) {
+                html += `<div class="contract-list-block"><h4>Detected conflicts</h4>
+            ${conflicts.map(conflict => `
+                <div class="result-item conflict-item">
+                    <strong>${escapeHtml(conflict.type || "Conflict")}</strong>
+                    <p>${escapeHtml(conflict.message || "No further details")}</p>
+                    ${conflict.field ? `<p class="subtle-text">Field: ${escapeHtml(conflict.field)}</p>` : ""}
+                </div>`).join("")}</div>`;
+            }
+
+            $("multiAgentDetails").innerHTML = html;
+            const canExecute = ["APPROVED", "PARTIALLY_APPROVED"].includes(result.status)
+                && !state.workflow_running
+                && state.execution !== "Completed";
+            $("executeTasksButton").disabled = !canExecute;
+            $("executionHelp").textContent = canExecute
+                ? "Only tasks marked APPROVED will execute. Blocked and pending tasks will be skipped."
+                : state.execution === "Completed"
+                    ? "Execution has already completed for this workflow."
+                    : "Execution is unavailable until verification approves at least one task.";
+        }
+
+        function renderQueue(state) {
+            const tasks = state.queued_tasks || [];
+            $("queueBadge").textContent = `${tasks.length} task${tasks.length === 1 ? "" : "s"}`;
+
+            if (!tasks.length) {
+                $("queueList").innerHTML = `
+            <div class="empty-state"><strong>The queue is empty</strong>
+            <p>Individually approved contracts can be added here.</p></div>`;
+                return;
+            }
+
+            $("queueList").innerHTML = tasks.map(task => `
+        <div class="queue-item">
+            <div class="queue-item-main">
+                <div class="queue-item-title">
+                    <strong>${escapeHtml(task.task || "Untitled task")}</strong>
+                    ${pill(task.multi_agent_status || "Pending")}
+                </div>
+                <span class="subtle-text">${escapeHtml(task.task_id)} · ${escapeHtml(task.field)} · ${escapeHtml(task.crop)}</span>
+                <span class="subtle-text">${escapeHtml(task.agent)} · ${escapeHtml(task.machine)}</span>
+                ${(task.conflict_reasons || []).length
+                    ? `<ul class="error-list">${renderRows(task.conflict_reasons)}</ul>` : ""}
+            </div>
+        </div>`).join("");
+        }
+
+        function renderExecution(state) {
+            const executions = state.execution_results || [];
+            const monitoring = state.monitoring_results || [];
+            const recovery = state.recovery_results || [];
+            const retries = state.retry_monitoring_results || [];
+
+            $("executionBadge").textContent = formatStatus(state.execution || "Not started");
+            $("executionBadge").className = "status-pill " + badgeClass(state.execution);
+
+            $("executionResults").innerHTML = executions.length
+                ? executions.map(item => `
+            <div class="result-item">
+                <div class="result-item-heading">
+                    <strong>${escapeHtml(item.task || item.task_id || "Task")}${item.is_retry ? " (Retry)" : ""}</strong>
+                    ${pill(item.skipped ? "SKIPPED" : item.success ? "SUCCESS" : "FAILED")}
+                </div>
+                <p>${escapeHtml(item.message || item.failure_type || (item.success ? "Execution succeeded." : "Execution failed."))}</p>
+                ${item.failure_type ? `<span class="subtle-text">Failure type: ${escapeHtml(item.failure_type)}</span>` : ""}
+            </div>`).join("")
+                : '<p class="subtle-text">No execution results yet.</p>';
+
+            $("monitoringResults").innerHTML = monitoring.length
+                ? monitoring.map(item => `
+            <div class="result-item">
+                <div class="result-item-heading">
+                    <strong>${escapeHtml(item.task_id || "Task")}</strong>
+                    ${pill(item.violation_detected ? "VIOLATION DETECTED" : item.monitored ? "NO VIOLATIONS" : "NOT MONITORED")}
+                </div>
+                <p>${escapeHtml(item.violation_type || (item.violation_detected ? "A violation was detected." : "Monitoring completed."))}</p>
+                ${(item.violations || []).length ? `<ul class="error-list">${renderRows(item.violations)}</ul>` : ""}
+            </div>`).join("")
+                : '<p class="subtle-text">Monitoring has not started.</p>';
+
+            $("recoveryBadge").textContent = recovery.length ? `${recovery.length} action(s)` : "No action";
+            $("recoveryBadge").className = "status-pill " + (recovery.length ? "pill-warning" : "");
+            $("recoveryResults").innerHTML = recovery.length
+                ? recovery.map(item => `
+            <div class="result-item">
+                <div class="result-item-heading">
+                    <strong>${escapeHtml(item.task_id || "Task")}</strong>
+                    ${pill(item.action || "No action")}
+                </div>
+                <p>${escapeHtml(item.reason || "No reason provided.")}</p>
+                ${item.retry_succeeded !== undefined
+                        ? `<p>${item.retry_succeeded ? "Retry succeeded and passed monitoring." : "Retry did not resolve the issue."}</p>`
+                        : ""}
+            </div>`).join("")
+                : `<div class="empty-state"><strong>No recovery action</strong><p>Recovery decisions will appear if monitoring detects a violation.</p></div>`;
+
+            $("retryResults").innerHTML = retries.length
+                ? retries.map(item => `
+            <div class="result-item">
+                <div class="result-item-heading"><strong>${escapeHtml(item.task_id || "Task")}</strong>
+                ${pill(item.violation_detected ? "VIOLATION DETECTED" : "NO VIOLATIONS")}</div>
+                <p>${escapeHtml(item.violation_type || "Retry monitoring completed.")}</p>
+            </div>`).join("")
+                : '<p class="subtle-text">No retry results yet.</p>';
+        }
+
+        function renderActivity(state) {
+            const activity = state.workflow_activity || [];
+            $("activityList").innerHTML = activity.length
+                ? [...activity].reverse().map(message =>
+                    `<div class="activity-item"><span class="activity-dot"></span><p>${escapeHtml(message)}</p></div>`
+                ).join("")
+                : '<p class="subtle-text">Workflow events will appear here.</p>';
+
+            const steps = state.completed_steps || [];
+            $("completedSteps").innerHTML = steps.length
+                ? steps.map(step => `<span class="completed-step">✓ ${escapeHtml(step)}</span>`).join("")
+                : '<p class="subtle-text">No workflow steps completed yet.</p>';
+        }
+
+        function updateStages(state) {
+            const stage = String(state.current_stage || "").toLowerCase();
+            const verified = Boolean(state.multi_agent_result);
+            const executed = (state.execution_results || []).length > 0;
+            const monitored = (state.monitoring_results || []).length > 0;
+
+            const done = {
+                contract: Boolean(state.contract),
+                verification: state.verification === "APPROVED",
+                queue: Boolean(state.multi_agent_result),
+                execution: executed,
+                monitoring: monitored
+            };
+
+            document.querySelectorAll(".workflow-stage").forEach(element => {
+                const name = element.dataset.stage;
+                element.classList.toggle("stage-done", Boolean(done[name]));
+                element.classList.toggle("stage-active",
+                    !done[name] && (
+                        (name === "contract" && stage.includes("contract")) ||
+                        (name === "verification" && stage.includes("verif")) ||
+                        (name === "queue" && (stage.includes("queue") || stage.includes("multi-agent"))) ||
+                        (name === "execution" && stage.includes("execution")) ||
+                        (name === "monitoring" && stage.includes("monitor"))
+                    )
+                );
+            });
+
+            $("workflowBadge").textContent = state.workflow_running
+                ? "Workflow running"
+                : state.current_stage || "Awaiting task";
+        }
+
+        function updateDashboard(state) {
+            latestState = state;
+
+            $("currentStage").textContent = state.current_stage || "Waiting for voice command";
+            $("currentMessage").textContent = (state.current_output || {}).message
+                || (state.current_output || {}).error
+                || "No new workflow message.";
+            $("voiceStatus").textContent = state.current_stage || "Ready for voice command";
+            $("systemStatus").textContent = state.workflow_running ? "Workflow running" : "System ready";
+            $("voiceReadyBadge").textContent = state.workflow_running ? "Processing" : "Ready for input";
+            $("recognizedTask").textContent = state.command || "No command yet";
+
+            const output = state.current_output || {};
+            $("confidenceScore").textContent = output.confidence_score !== undefined
+                ? `${Math.round(Number(output.confidence_score) * 100)}%`
+                : "—";
+
+            $("commandHeard").classList.toggle("hidden",
+                !state.command || state.command === "No command yet");
+            $("heardCommand").textContent = state.command || "No command yet";
+
+            $("continueProcessing").classList.toggle("hidden", !state.needs_continue);
+            $("commandSelection").classList.toggle("hidden", !state.needs_selection);
+            $("voiceButton").disabled = Boolean(state.workflow_running)
+                || Boolean(state.needs_continue)
+                || Boolean(state.needs_contract_check)
+                || Boolean(state.needs_selection);
+
+            renderContract(state);
+            renderMultiAgent(state);
+            renderQueue(state);
+            renderExecution(state);
+            renderActivity(state);
+            updateStages(state);
+
+            if (farmResourcesAvailable(state.farm_state)) {
+                $("resourceWater").textContent = `${state.farm_state.resources.water} L`;
+                $("resourceFuel").textContent = `${state.farm_state.resources.fuel} L`;
+                $("resourceFertilizer").textContent = `${state.farm_state.resources.fertilizer} kg`;
+            }
+        }
+
+        function farmResourcesAvailable(value) {
+            return value && value.resources;
+        }
+
+        async function refreshStatus() {
+            try {
+                const response = await fetch("/workflow_status");
+                if (!response.ok) throw new Error("Unable to retrieve workflow status.");
+                updateDashboard(await response.json());
+            } catch (error) {
+                $("voiceStatus").textContent = error.message;
+            }
+        }
+
+        function schedulePolling() {
+            if (pollingTimer) clearTimeout(pollingTimer);
+            pollingTimer = setTimeout(async () => {
+                await refreshStatus();
+                if (latestState && latestState.workflow_running) schedulePolling();
+            }, 700);
+        }
+
+        async function runAction(url, method = "GET", message = "Processing...") {
+            if (requestInProgress) return;
+            requestInProgress = true;
+            $("voiceStatus").textContent = message;
+
+            try {
+                const response = await fetch(url, { method });
+                const data = await response.json();
+
+                if (!response.ok || data.success === false) {
+                    $("voiceStatus").textContent = data.message || "The action could not be completed.";
+                    await refreshStatus();
+                    return;
+                }
+
+                $("voiceStatus").textContent = data.message || message;
+                await refreshStatus();
+
+                if (latestState && latestState.workflow_running) schedulePolling();
+            } catch (error) {
+                $("voiceStatus").textContent = `Request failed: ${error.message}`;
+            } finally {
+                requestInProgress = false;
+            }
+        }
 
         function startVoice() {
-
-            voiceButton.disabled = true;
-
-
-            voiceStatus.innerHTML =
-                "Starting voice command workflow...";
-
-
-            hideCommandSelection();
-
-            hideContinueProcessing();
-
-
-            fetch("/start_voice")
-
-                .then(
-                    response => response.json()
-                )
-
-                .then(
-                    data => {
-
-                        if (!data.success) {
-
-                            voiceStatus.innerHTML =
-                                data.message;
-
-                            voiceButton.disabled =
-                                false;
-
-                            return;
-
-                        }
-
-
-                        pollWorkflowStatus();
-
-                    }
-                )
-
-                .catch(
-                    error => {
-
-                        console.error(
-                            "Start voice error:",
-                            error
-                        );
-
-
-                        voiceStatus.innerHTML =
-                            "Error while starting voice command.";
-
-
-                        voiceButton.disabled =
-                            false;
-
-                    }
-                );
-
+            runAction("/start_voice", "GET", "Starting voice command...");
         }
-
-
-        /* ================================================= */
-        /* POLL BACKEND STATUS */
-        /* ================================================= */
-
-
-        function pollWorkflowStatus() {
-
-            fetch("/workflow_status")
-
-                .then(
-                    response => response.json()
-                )
-
-                .then(
-                    state => {
-
-
-                        updateDashboard(
-                            state
-                        );
-
-
-                        if (
-                            state.workflow_running
-                        ) {
-
-                            setTimeout(
-                                pollWorkflowStatus,
-                                700
-                            );
-
-                        }
-
-                        else {
-
-                            voiceButton.disabled =
-                                state.needs_selection ||
-                                state.needs_continue ||
-                                state.needs_contract_check;
-
-                        }
-
-                    }
-                )
-
-                .catch(
-                    error => {
-
-                        console.error(
-                            "Workflow status error:",
-                            error
-                        );
-
-
-                        setTimeout(
-                            pollWorkflowStatus,
-                            1000
-                        );
-
-                    }
-                );
-
-        }
-
-
-        /* ================================================= */
-        /* UPDATE DASHBOARD */
-        /* ================================================= */
-
-
-        function updateDashboard(
-            state
-        ) {
-
-
-            /* --------------------------------------------- */
-            /* CURRENT STAGE */
-            /* --------------------------------------------- */
-
-
-            const currentStage =
-                document.getElementById(
-                    "currentStage"
-                );
-
-
-            if (currentStage) {
-
-                currentStage.innerHTML =
-                    escapeHtml(
-                        state.current_stage ||
-                        "Waiting for voice command"
-                    );
-
-            }
-
-
-            /* --------------------------------------------- */
-            /* VOICE STATUS */
-            /* --------------------------------------------- */
-
-
-            if (
-                state.current_stage
-            ) {
-
-                voiceStatus.innerHTML =
-                    escapeHtml(
-                        state.current_stage
-                    );
-
-            }
-
-
-            /* --------------------------------------------- */
-            /* COMMAND HEARD */
-            /* --------------------------------------------- */
-
-
-            if (
-                state.command &&
-                state.command !==
-                "No command yet"
-            ) {
-
-
-                if (commandHeard) {
-
-                    commandHeard.style.display =
-                        "block";
-
-                }
-
-
-                if (heardCommand) {
-
-                    heardCommand.innerHTML =
-                        "&quot;" +
-                        escapeHtml(
-                            state.command
-                        ) +
-                        "&quot;";
-
-                }
-
-            }
-
-
-            /* --------------------------------------------- */
-            /* TASK INFORMATION */
-            /* --------------------------------------------- */
-
-
-            updateText(
-                "taskCommand",
-                state.command
-            );
-
-
-            updateText(
-                "taskId",
-                state.task_id
-            );
-
-
-            updateText(
-                "taskAgent",
-                state.agent
-            );
-
-
-            updateText(
-                "taskMachine",
-                state.machine
-            );
-
-
-            updateText(
-                "taskName",
-                state.task
-            );
-
-
-            updateText(
-                "taskCrop",
-                state.crop
-            );
-
-
-            updateText(
-                "taskField",
-                state.field
-            );
-
-
-            updateText(
-                "taskVerification",
-                state.verification
-            );
-
-
-            updateText(
-                "taskExecution",
-                state.execution
-            );
-
-
-            updateText(
-                "taskMonitoring",
-                state.monitoring
-            );
-
-
-            /* --------------------------------------------- */
-            /* LIVE BACKEND OUTPUT */
-            /* --------------------------------------------- */
-
-
-            updateLiveOutput(
-                state.current_output
-            );
-
-
-            /* --------------------------------------------- */
-            /* WORKFLOW PROGRESS */
-            /* --------------------------------------------- */
-
-
-            updateWorkflowProgress(
-                state.completed_steps
-            );
-
-
-            /* --------------------------------------------- */
-            /* COMMAND SELECTION */
-            /* --------------------------------------------- */
-
-
-            if (
-                state.needs_selection
-            ) {
-
-                showCommandSelection();
-
-            }
-
-            else {
-
-                hideCommandSelection();
-
-            }
-
-
-            /* --------------------------------------------- */
-            /* CONTINUE PROCESSING */
-            /* --------------------------------------------- */
-
-
-            if (
-                state.needs_continue
-            ) {
-
-                showContinueProcessing();
-
-            }
-
-            else {
-
-                hideContinueProcessing();
-
-            }
-
-        }
-
-
-        /* ================================================= */
-        /* UPDATE TEXT */
-        /* ================================================= */
-
-
-        function updateText(
-            elementId,
-            value
-        ) {
-
-
-            const element =
-                document.getElementById(
-                    elementId
-                );
-
-
-            if (!element) {
-
-                return;
-
-            }
-
-
-            if (
-                value === null ||
-                value === undefined ||
-                value === ""
-            ) {
-
-                element.innerHTML =
-                    "None";
-
-            }
-
-            else {
-
-                element.innerHTML =
-                    escapeHtml(
-                        String(value)
-                    );
-
-            }
-
-        }
-
-
-        /* ================================================= */
-        /* LIVE BACKEND OUTPUT */
-        /* ================================================= */
-
-
-        function updateLiveOutput(
-            output
-        ) {
-
-
-            const liveOutput =
-                document.getElementById(
-                    "liveOutput"
-                );
-
-
-            if (!liveOutput) {
-
-                return;
-
-            }
-
-
-            if (!output) {
-
-                return;
-
-            }
-
-
-            let html = "";
-
-
-            /* --------------------------------------------- */
-            /* MESSAGE */
-            /* --------------------------------------------- */
-
-
-            if (
-                output.message
-            ) {
-
-                html += `
-
-                <div class="output-message">
-
-                    ${escapeHtml(
-                    output.message
-                )}
-
-                </div>
-
-            `;
-
-            }
-
-
-            /* --------------------------------------------- */
-            /* COMMAND RECOGNITION */
-            /* --------------------------------------------- */
-
-
-            if (
-                output.recognized_command
-            ) {
-
-                html += `
-
-                <div class="contract-output">
-
-                    <h3>
-                        Command Recognition
-                    </h3>
-
-
-                    <div class="contract-row">
-
-                        <span>
-                            Command
-                        </span>
-
-
-                        <strong>
-
-                            ${escapeHtml(
-                    output.recognized_command
-                )}
-
-                        </strong>
-
-                    </div>
-
-
-                    <div class="contract-row">
-
-                        <span>
-                            Detected Task
-                        </span>
-
-
-                        <strong>
-
-                            ${escapeHtml(
-                    output.detected_task ||
-                    "None"
-                )}
-
-                        </strong>
-
-                    </div>
-
-
-                    <div class="contract-row">
-
-                        <span>
-                            Confidence Score
-                        </span>
-
-
-                        <strong>
-
-                            ${output.confidence_score ??
-                    "None"}
-
-                        </strong>
-
-                    </div>
-
-                </div>
-
-            `;
-
-            }
-
-
-            /* --------------------------------------------- */
-            /* GENERATED CONTRACT */
-            /* --------------------------------------------- */
-
-
-            if (
-                output.task_id
-            ) {
-
-                html += `
-
-                <div class="contract-output">
-
-                    <h3>
-                        Generated Task Contract
-                    </h3>
-
-
-                    <div class="contract-row">
-
-                        <span>
-                            Task ID
-                        </span>
-
-                        <strong>
-
-                            ${escapeHtml(
-                    output.task_id
-                )}
-
-                        </strong>
-
-                    </div>
-
-
-                    <div class="contract-row">
-
-                        <span>
-                            Agent
-                        </span>
-
-                        <strong>
-
-                            ${escapeHtml(
-                    output.agent ||
-                    "None"
-                )}
-
-                        </strong>
-
-                    </div>
-
-
-                    <div class="contract-row">
-
-                        <span>
-                            Machine
-                        </span>
-
-                        <strong>
-
-                            ${escapeHtml(
-                    output.machine ||
-                    "None"
-                )}
-
-                        </strong>
-
-                    </div>
-
-
-                    <div class="contract-row">
-
-                        <span>
-                            Task
-                        </span>
-
-                        <strong>
-
-                            ${escapeHtml(
-                    output.task ||
-                    "None"
-                )}
-
-                        </strong>
-
-                    </div>
-
-
-                    <div class="contract-row">
-
-                        <span>
-                            Crop
-                        </span>
-
-                        <strong>
-
-                            ${escapeHtml(
-                    output.crop ||
-                    "None"
-                )}
-
-                        </strong>
-
-                    </div>
-
-
-                    <div class="contract-row">
-
-                        <span>
-                            Field
-                        </span>
-
-                        <strong>
-
-                            ${escapeHtml(
-                    output.field ||
-                    "None"
-                )}
-
-                        </strong>
-
-                    </div>
-
-
-                    <div class="contract-block">
-
-                        <strong>
-                            Preconditions
-                        </strong>
-
-                        <ul>
-
-                            ${makeList(
-                    output.preconditions
-                )}
-
-                        </ul>
-
-                    </div>
-
-
-                    <div class="contract-block">
-
-                        <strong>
-                            Required Resources
-                        </strong>
-
-                        <ul>
-
-                            ${makeList(
-                    output.required_resources
-                )}
-
-                        </ul>
-
-                    </div>
-
-
-                    <div class="contract-block">
-
-                        <strong>
-                            Constraints
-                        </strong>
-
-                        <ul>
-
-                            ${makeList(
-                    output.constraints
-                )}
-
-                        </ul>
-
-                    </div>
-
-
-                    <div class="contract-block">
-
-                        <strong>
-                            Expected Outcome
-                        </strong>
-
-                        <p>
-
-                            ${escapeHtml(
-                    output.expected_outcome ||
-                    "None"
-                )}
-
-                        </p>
-
-                    </div>
-
-                </div>
-
-            `;
-
-            }
-
-
-            /* --------------------------------------------- */
-            /* INDIVIDUAL CONTRACT VERIFICATION */
-            /* --------------------------------------------- */
-
-
-            if (
-                output.verified !== undefined &&
-                output.verified !== null &&
-                output.conflicts === undefined
-            ) {
-
-
-                html += `
-
-                <div class="verification-output">
-
-                    <h3>
-                        Contract Verification
-                    </h3>
-
-
-                    <div class="verification-status">
-
-                        ${output.verified
-                        ? "APPROVED"
-                        : "REJECTED"
-                    }
-
-                    </div>
-
-            `;
-
-
-                if (
-                    output.errors &&
-                    output.errors.length
-                ) {
-
-                    html += `
-
-                    <div class="contract-block">
-
-                        <strong>
-                            Verification Errors
-                        </strong>
-
-                        <ul>
-
-                            ${makeList(
-                        output.errors
-                    )}
-
-                        </ul>
-
-                    </div>
-
-                `;
-
-                }
-
-
-                if (
-                    output.preconditions
-                ) {
-
-                    html += `
-
-                    <div class="contract-block">
-
-                        <strong>
-                            Preconditions
-                        </strong>
-
-                        <p>
-
-                            ${escapeHtml(
-                        output.preconditions
-                    )}
-
-                        </p>
-
-                    </div>
-
-                `;
-
-                }
-
-
-                if (
-                    output.constraints
-                ) {
-
-                    html += `
-
-                    <div class="contract-block">
-
-                        <strong>
-                            Constraints
-                        </strong>
-
-                        <p>
-
-                            ${escapeHtml(
-                        output.constraints
-                    )}
-
-                        </p>
-
-                    </div>
-
-                `;
-
-                }
-
-
-                /* --------------------------------------------- */
-                /* TASK QUEUE CONTROLS */
-                /* --------------------------------------------- */
-
-                if (
-                    output.verified
-                ) {
-
-                    html += `
-
-                    <div
-                        class="command-selection"
-                        style="margin-top: 20px;"
-                    >
-
-                        <h3>
-                            Task Queue
-                        </h3>
-
-                        <p>
-                            Contract verified successfully.
-                            Add this task to the queue or
-                            finish task collection.
-                        </p>
-
-
-                        <button
-                            type="button"
-                            class="selection-button"
-                            onclick="addTask()"
-                        >
-                            ADD TASK
-                        </button>
-
-
-                        <button
-                            type="button"
-                            class="selection-button"
-                            onclick="finishTasks()"
-                        >
-                            FINISH TASKS
-                        </button>
-
-                    </div>
-
-                `;
-
-                }
-
-
-                html += `
-
-                </div>
-
-            `;
-
-            }
-
-
-            /* --------------------------------------------- */
-            /* MULTI-AGENT VERIFICATION */
-            /* --------------------------------------------- */
-
-
-            if (
-                output.verified !== undefined &&
-                output.conflicts !== undefined
-            ) {
-
-                html += `
-
-                <div class="verification-output">
-
-                    <h3>
-                        Multi-Agent Contract Verification
-                    </h3>
-
-
-                    <div class="verification-status">
-
-                        ${output.verified
-                        ? "APPROVED"
-                        : "REJECTED"
-                    }
-
-                    </div>
-
-            `;
-
-
-                /* --------------------------------------------- */
-                /* APPROVED */
-                /* --------------------------------------------- */
-
-
-                if (
-                    output.verified
-                ) {
-
-                    html += `
-
-                    <p>
-                        No conflicts detected between
-                        the queued task contracts.
-                    </p>
-
-                `;
-
-                }
-
-
-                /* --------------------------------------------- */
-                /* REJECTED */
-                /* --------------------------------------------- */
-
-
-                else {
-
-                    html += `
-
-                    <p>
-                        Conflicts detected:
-                        ${output.conflicts.length}
-                    </p>
-
-                `;
-
-
-                    output.conflicts.forEach(
-                        conflict => {
-
-                            html += `
-
-                            <div
-                                class="contract-output"
-                                style="margin-top: 10px;"
-                            >
-
-                                <p>
-
-                                    <strong>
-                                        Conflict Type:
-                                    </strong>
-
-                                    ${escapeHtml(
-                                conflict.type
-                            )}
-
-                                </p>
-
-
-                                <p>
-
-                                    <strong>
-                                        Tasks:
-                                    </strong>
-
-                                    ${escapeHtml(
-                                conflict.tasks.join(", ")
-                            )}
-
-                                </p>
-
-                        `;
-
-
-                            if (
-                                conflict.field
-                            ) {
-
-                                html += `
-
-                                <p>
-
-                                    <strong>
-                                        Field:
-                                    </strong>
-
-                                    ${escapeHtml(
-                                    conflict.field
-                                )}
-
-                                </p>
-
-                            `;
-
-                            }
-
-
-                            html += `
-
-                                <p>
-
-                                    <strong>
-                                        Reason:
-                                    </strong>
-
-                                    ${escapeHtml(
-                                conflict.message
-                            )}
-
-                                </p>
-
-                            </div>
-
-                        `;
-
-                        }
-                    );
-
-
-                    html += `
-
-                    <p style="margin-top: 15px;">
-
-                        <strong>
-                            Execution is blocked.
-                        </strong>
-
-                    </p>
-
-                `;
-
-                }
-
-
-                html += `
-
-                </div>
-
-            `;
-
-            }
-
-
-            /* --------------------------------------------- */
-            /* DISPLAY OUTPUT */
-            /* --------------------------------------------- */
-
-
-            if (html) {
-
-                liveOutput.innerHTML =
-                    html;
-
-            }
-
-        }
-
-
-        /* ================================================= */
-        /* WORKFLOW PROGRESS */
-        /* ================================================= */
-
-
-        function updateWorkflowProgress(
-            steps
-        ) {
-
-
-            const progress =
-                document.getElementById(
-                    "workflowProgress"
-                );
-
-
-            if (!progress) {
-
-                return;
-
-            }
-
-
-            if (
-                !steps ||
-                steps.length === 0
-            ) {
-
-                progress.innerHTML = `
-
-                <h3>
-                    Workflow Progress
-                </h3>
-
-
-                <p class="no-progress">
-
-                    No workflow steps completed yet.
-
-                </p>
-
-            `;
-
-                return;
-
-            }
-
-
-            let html = `
-
-            <h3>
-                Workflow Progress
-            </h3>
-
-
-            <ul class="completed-steps">
-
-        `;
-
-
-            steps.forEach(
-                step => {
-
-                    html += `
-
-                    <li>
-                        ✓ ${escapeHtml(step)}
-                    </li>
-
-                `;
-
-                }
-            );
-
-
-            html += `
-
-            </ul>
-
-        `;
-
-
-            progress.innerHTML =
-                html;
-
-        }
-
-
-        /* ================================================= */
-        /* SHOW COMMAND SELECTION */
-        /* ================================================= */
-
-
-        function showCommandSelection() {
-
-            if (!commandSelection) {
-
-                return;
-
-            }
-
-
-            commandSelection.style.display =
-                "block";
-
-        }
-
-
-        /* ================================================= */
-        /* HIDE COMMAND SELECTION */
-        /* ================================================= */
-
-
-        function hideCommandSelection() {
-
-            if (!commandSelection) {
-
-                return;
-
-            }
-
-
-            commandSelection.style.display =
-                "none";
-
-        }
-
-
-        /* ================================================= */
-        /* SHOW CONTINUE PROCESSING */
-        /* ================================================= */
-
-
-        function showContinueProcessing() {
-
-            if (!continueProcessingPanel) {
-
-                return;
-
-            }
-
-
-            continueProcessingPanel.style.display =
-                "block";
-
-        }
-
-
-        /* ================================================= */
-        /* HIDE CONTINUE PROCESSING */
-        /* ================================================= */
-
-
-        function hideContinueProcessing() {
-
-            if (!continueProcessingPanel) {
-
-                return;
-
-            }
-
-
-            continueProcessingPanel.style.display =
-                "none";
-
-        }
-
-
-        /* ================================================= */
-        /* CONTINUE PROCESSING */
-        /* ================================================= */
-
-
         function continueProcessing() {
-
-            hideContinueProcessing();
-
-            voiceButton.disabled = true;
-
-            voiceStatus.innerHTML =
-                "Starting task processing...";
-
-
-            fetch("/continue_processing")
-
-                .then(
-                    response => response.json()
-                )
-
-                .then(
-                    data => {
-
-                        if (!data.success) {
-
-                            voiceStatus.innerHTML =
-                                data.message;
-
-                            voiceButton.disabled =
-                                false;
-
-                            return;
-
-                        }
-
-
-                        pollWorkflowStatus();
-
-                    }
-                )
-
-                .catch(
-                    error => {
-
-                        console.error(
-                            "Continue processing error:",
-                            error
-                        );
-
-
-                        voiceStatus.innerHTML =
-                            "Error while continuing task processing.";
-
-
-                        voiceButton.disabled =
-                            false;
-
-                    }
-                );
-
+            runAction("/continue_processing", "GET", "Generating task contract...");
         }
-
-
-        /* ================================================= */
-        /* CHECK CONTRACT */
-        /* ================================================= */
-
-
         function checkContract() {
-
-            voiceButton.disabled = true;
-
-            voiceStatus.innerHTML =
-                "Checking task contract...";
-
-
-            fetch("/check_contract")
-
-                .then(
-                    response => response.json()
-                )
-
-                .then(
-                    data => {
-
-                        if (!data.success) {
-
-                            voiceStatus.innerHTML =
-                                data.message;
-
-                            voiceButton.disabled =
-                                false;
-
-                            return;
-
-                        }
-
-
-                        pollWorkflowStatus();
-
-                    }
-                )
-
-                .catch(
-                    error => {
-
-                        console.error(
-                            "Contract check error:",
-                            error
-                        );
-
-
-                        voiceStatus.innerHTML =
-                            "Error while checking contract.";
-
-
-                        voiceButton.disabled =
-                            false;
-
-                    }
-
-                );
-
+            runAction("/check_contract", "GET", "Checking individual contract...");
         }
-
-
-        /* ================================================= */
-        /* ADD TASK */
-        /* ================================================= */
-
-
         function addTask() {
-
-            voiceStatus.innerHTML =
-                "Adding task to queue...";
-
-
-            fetch("/add_task")
-
-                .then(
-                    response => response.json()
-                )
-
-                .then(
-                    data => {
-
-                        if (!data.success) {
-
-                            voiceStatus.innerHTML =
-                                data.message;
-
-                            return;
-
-                        }
-                        // Store the queue count so it is not lost
-                        // when the live output is refreshed.
-                        queueCount = data.queue_count;
-
-                        voiceStatus.innerHTML =
-                            "Task added to queue successfully.";
-
-
-                        const queueStatus =
-                            document.getElementById(
-                                "queueStatus"
-                            );
-
-                        window.queueCount = data.queue_count;
-
-                        if (queueStatus) {
-
-                            queueStatus.innerHTML =
-                                "Tasks in queue: " +
-                                data.queue_count;
-
-                        }
-
-
-                        pollWorkflowStatus();
-
-                    }
-                )
-
-                .catch(
-                    error => {
-
-                        console.error(
-                            "Add task error:",
-                            error
-                        );
-
-
-                        voiceStatus.innerHTML =
-                            "Error while adding task.";
-
-                    }
-                );
-
+            runAction("/add_task", "GET", "Adding task to queue...");
         }
-
-
-        /* ================================================= */
-        /* FINISH TASKS */
-        /* ================================================= */
-
-
         function finishTasks() {
-
-            voiceButton.disabled = true;
-
-            voiceStatus.innerHTML =
-                "Checking all queued tasks for conflicts...";
-
-
-            fetch("/finish_tasks")
-
-                .then(
-                    response => response.json()
-                )
-
-                .then(
-                    data => {
-
-                        if (!data.success) {
-
-                            voiceStatus.innerHTML =
-                                data.message;
-
-                            voiceButton.disabled =
-                                false;
-
-                            return;
-
-                        }
-
-
-                        pollWorkflowStatus();
-
-                    }
-                )
-
-                .catch(
-                    error => {
-
-                        console.error(
-                            "Finish tasks error:",
-                            error
-                        );
-
-
-                        voiceStatus.innerHTML =
-                            "Error while checking queued tasks.";
-
-
-                        voiceButton.disabled =
-                            false;
-
-                    }
-                );
-
+            runAction("/finish_tasks", "GET", "Verifying queued task contracts...");
         }
-
-
-        /* ================================================= */
-        /* SPEAK AGAIN */
-        /* ================================================= */
-
-
+        function executeTasks() {
+            runAction("/execute_tasks", "POST", "Executing approved tasks and monitoring results...");
+        }
         function startVoiceAgain() {
-
-            hideCommandSelection();
-
-            hideContinueProcessing();
-
             startVoice();
-
         }
 
+        $("voiceButton").addEventListener("click", startVoice);
 
-        /* ================================================= */
-        /* LIST HELPER */
-        /* ================================================= */
-
-
-        function makeList(
-            items
-        ) {
-
-
-            if (
-                !items ||
-                items.length === 0
-            ) {
-
-                return "<li>None</li>";
-
-            }
-
-
-            return items
-                .map(
-                    item => {
-
-                        return `
-                        <li>
-                            ${escapeHtml(item)}
-                        </li>
-                    `;
-
-                    }
-                )
-                .join("");
-
-        }
-
-
-        /* ================================================= */
-        /* HTML ESCAPE */
-        /* ================================================= */
-
-
-        function escapeHtml(
-            value
-        ) {
-
-
-            if (
-                value === null ||
-                value === undefined
-            ) {
-
-                return "";
-
-            }
-
-
-            return String(value)
-
-                .replace(
-                    /&/g,
-                    "&amp;"
-                )
-
-                .replace(
-                    /</g,
-                    "&lt;"
-                )
-
-                .replace(
-                    />/g,
-                    "&gt;"
-                )
-
-                .replace(
-                    /"/g,
-                    "&quot;"
-                )
-
-                .replace(
-                    /'/g,
-                    "&#039;"
-                );
-
-        }
-
-
+        document.addEventListener("DOMContentLoaded", async () => {
+            await refreshStatus();
+            if (latestState && latestState.workflow_running) schedulePolling();
+        });
     </script>
-
-
 </body>
 
 </html>

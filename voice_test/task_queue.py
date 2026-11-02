@@ -124,15 +124,29 @@ def clear_queue():
 # VERIFY QUEUED TASKS
 # ------------------------------------------------
 
-def verify_queued_tasks():
 
-    from multi_agent_verifier import (
-        verify_multi_agent_contracts
-    )
+def verify_queued_tasks():
+    from multi_agent_verifier import verify_multi_agent_contracts
 
     contracts = get_tasks()
+    result = verify_multi_agent_contracts(contracts)
 
-    return verify_multi_agent_contracts(contracts)
+    # Store each task's individual verification status.
+    status_by_id = {
+        task["task_id"]: task
+        for task in result.get("tasks", [])
+    }
+
+    for contract in contracts:
+        task_id = contract.get("task_id", "UNKNOWN")
+        task_result = status_by_id.get(task_id)
+
+        if task_result:
+            contract["multi_agent_status"] = task_result["status"]
+            contract["conflict_reasons"] = task_result["conflict_reasons"]
+
+    return result
+
 
 
 # ------------------------------------------------

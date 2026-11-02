@@ -680,6 +680,19 @@ def execute_task(
     print(f"Field: {contract.get('field')}")
     print(f"Machine: {contract.get('machine')}")
 
+
+    if contract.get("multi_agent_status") == "BLOCKED":
+        return {
+            "success": False,
+            "failure_type": "multi_agent_conflict",
+            "message": (
+                f"Task {contract.get('task_id', 'UNKNOWN')} "
+                "was blocked due to a multi-agent conflict. "
+                "Execution skipped."
+            )
+        }
+
+
     # --------------------------------------------
     # CAPTURE STATE BEFORE EXECUTION
     # --------------------------------------------
